@@ -74,6 +74,11 @@ void C4FoWLight::SetReach(int32_t iReach2, int32_t iFadeout2)
 	}
 }
 
+void C4FoWLight::SetColor(long iValue)
+{
+	iColor = iValue;
+}
+
 void C4FoWLight::Update(C4Rect Rec)
 {
 	// Update position from object. Clear if we moved in any way

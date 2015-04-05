@@ -1334,6 +1334,17 @@ static C4Void FnSetLightRange(C4Object *Obj, long iRange, Nillable<long> iFadeou
 	return C4Void();
 }
 
+static C4Void FnSetLightColor(C4Object *Obj, Nillable<long> iValue)
+{
+	if (iValue.IsNil())
+	{
+		iValue = 0;
+	}
+
+	Obj->SetLightColor(iValue);
+	return C4Void();
+}
+
 static C4Void FnSetPicture(C4Object *Obj, long iX, long iY, long iWdt, long iHgt)
 {
 	// set new picture rect
@@ -2601,6 +2612,7 @@ void InitObjectFunctionMap(C4AulScriptEngine *pEngine)
 	AddFunc(pEngine, "GetColor", FnGetColor);
 	AddFunc(pEngine, "SetColor", FnSetColor);
 	AddFunc(pEngine, "SetLightRange", FnSetLightRange);
+	AddFunc(pEngine, "SetLightColor", FnSetLightColor);
 	AddFunc(pEngine, "SetPicture", FnSetPicture);
 	AddFunc(pEngine, "GetProcedure", FnGetProcedure);
 	AddFunc(pEngine, "CanConcatPictureWith", FnCanConcatPictureWith);
