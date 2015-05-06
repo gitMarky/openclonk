@@ -23,6 +23,13 @@ class C4FoWRegion;
 class C4TargetFacet;
 class C4FoWLight;
 
+enum C4DrawPass
+{
+	C4DP_First = 0,
+	C4DP_Second = 1,
+	C4DP_Color = 2
+};
+
 /** A C4FoWDrawStrategy is a connector to OpenGL calls used to draw the light.
    C4FoWLight tells this class which part of the light should be drawn now
    and subsequently pushes the vertices with the information whether a vertex
@@ -83,7 +90,7 @@ class C4FoWDrawLightTextureStrategy : public C4FoWDrawStrategy
 public:
 	C4FoWDrawLightTextureStrategy(const C4FoWLight* light, const C4FoWRegion* region) : light(light), region(region) {};
 
-	virtual int32_t GetRequestedPasses() { return 2; };
+	virtual int32_t GetRequestedPasses() { return 3; };
 	virtual void DrawLightVertex(float x, float y);
 	virtual void DrawDarkVertex(float x, float y);
 	virtual void Begin(int32_t pass);

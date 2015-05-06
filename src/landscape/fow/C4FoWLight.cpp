@@ -121,7 +121,7 @@ void C4FoWLight::Render(C4FoWRegion *region, const C4TargetFacet *onScreen)
 	else          pen = new C4FoWDrawLightTextureStrategy(this, region);
 
 	for(int pass = 0; pass < pen->GetRequestedPasses(); pass++)
-	{  
+	{
 		pen->Begin(pass);
 
 		DrawFan(pen, triangles);
@@ -143,10 +143,13 @@ void C4FoWLight::CalculateFanMaxed(TriangleList &triangles) const
 
 		// Is the left point close enough that normals don't max out?
 		float dist = sqrt(GetSquaredDistanceTo(tri.fanLX, tri.fanLY));
-		if (dist <= getNormalSize()) {
+		if (dist <= getNormalSize())
+		{
 			tri.nfanLX = tri.fanLX;
 			tri.nfanLY = tri.fanLY;
-		} else {
+		}
+		else
+		{
 			// Otherwise, calculate point where they do. We will add a seperate
 			// triangle/quad later on to capture that.
 			float f = float(getNormalSize() / dist);
@@ -156,10 +159,13 @@ void C4FoWLight::CalculateFanMaxed(TriangleList &triangles) const
 
 		// Same for the right point
 		dist = sqrt(GetSquaredDistanceTo(tri.fanRX, tri.fanRY));
-		if (dist <= getNormalSize()) {
+		if (dist <= getNormalSize())
+		{
 			tri.nfanRX = tri.fanRX;
 			tri.nfanRY = tri.fanRY;
-		} else {
+		}
+		else
+		{
 			float f = float(getNormalSize()) / dist;
 			tri.nfanRX = f * tri.fanRX + (1.0f - f) * getX();
 			tri.nfanRY = f * tri.fanRY + (1.0f - f) * getY();
@@ -195,7 +201,8 @@ void C4FoWLight::CalculateIntermediateFadeTriangles(TriangleList &triangles) con
 				
 		// an extra intermediate fade point is only necessary on cliffs
 		tri.descending = distFanR > distNextFanL;
-		if (tri.descending) {
+		if (tri.descending)
+		{
 			if (distFanR < distNextFadeL)
 			{
 				tri.fadeIX = nextTri.fadeLX;
@@ -222,7 +229,7 @@ void C4FoWLight::CalculateIntermediateFadeTriangles(TriangleList &triangles) con
 				ProjectPointOutward(tri.fadeIX, tri.fadeIY, sqrt(distNextFadeL));
 			}
 		}
-		
+
 	}
 }
 

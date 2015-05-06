@@ -40,7 +40,7 @@ bool C4FoWRegion::BindFramebuf()
 	// Can simply reuse old texture?
 	if (!pSurface || pSurface->Wdt < Region.Wdt || pSurface->Hgt < Region.Hgt)
 	{
-		// Create texture. Round up to next power of two in order to
+		// Determine texture size. Round up to next power of two in order to
 		// prevent rounding errors, as well as preventing lots of
 		// re-allocations when region size changes quickly (think zoom).
 		if (!pSurface)
@@ -48,12 +48,20 @@ bool C4FoWRegion::BindFramebuf()
 		int iWdt = 1, iHgt = 1;
 		while (iWdt < Region.Wdt) iWdt *= 2;
 		while (iHgt < Region.Hgt) iHgt *= 2;
+
+		// Double the texture size. The second half of the texture
+		// will contain the light color information, while the
+		// first half contains the brightness and direction information
+		iHgt *= 2;
+
+		// Create the texture
 		if (!pSurface->Create(iWdt, iHgt))
 			return false;
 	}
 
 	// Generate frame buffer object
-	if (!hFrameBufDraw) {
+	if (!hFrameBufDraw)
+	{
 		glGenFramebuffersEXT(1, &hFrameBufDraw);
 		glGenFramebuffersEXT(1, &hFrameBufRead);
 	}
@@ -141,13 +149,21 @@ void C4FoWRegion::Render(const C4TargetFacet *pOnScreen)
 	glClearColor(0.0f, 0.5f/1.5f, 0.5f/1.5f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// clear lower half of texture
+
+	//glEnable(GL_SCISSOR_TEST);
+	//glScissor(x, y, width, height);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	//glDisable(GL_SCISSOR_TEST);
+
 	// Render FoW to frame buffer object
 	glBlendFunc(GL_ONE, GL_ONE);
 	pFoW->Render(this, NULL, pPlayer);
 
 	// Copy over the old state
-	if (OldRegion.Wdt > 0) {
-
+	if (OldRegion.Wdt > 0)
+	{
 		// Set up shader. If this one doesn't work, we're really in trouble.
 		C4Shader *pShader = pFoW->GetFramebufShader();
 		assert(pShader);
@@ -170,7 +186,8 @@ void C4FoWRegion::Render(const C4TargetFacet *pOnScreen)
 		int tquad[8] = { sx0, ty0,  tx0, ty1,  tx1, ty1, tx1, ty0, };
 
 		// Transform into texture coordinates
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 4; i++)
+		{
 			squad[i*2] = squad[i*2] / getBackSurface()->Wdt;
 			squad[i*2+1] = 1.0 - squad[i*2+1] / getBackSurface()->Hgt;
 		}
@@ -199,7 +216,6 @@ void C4FoWRegion::Render(const C4TargetFacet *pOnScreen)
 	glCheck();
 
 	OldRegion = Region;
-
 }
 
 void C4FoWRegion::GetFragTransform(const C4Rect& clipRect, const C4Rect& outRect, float lightTransform[6]) const
