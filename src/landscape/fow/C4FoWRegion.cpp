@@ -150,12 +150,11 @@ void C4FoWRegion::Render(const C4TargetFacet *pOnScreen)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// clear lower half of texture
-
-	//glEnable(GL_SCISSOR_TEST);
-	//glScissor(x, y, width, height);
+	glScissor(0, 0, getSurface()->Wdt, getSurface()->Hgt / 2.0);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glEnable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
-	//glDisable(GL_SCISSOR_TEST);
+	glDisable(GL_SCISSOR_TEST);
 
 	// Render FoW to frame buffer object
 	glBlendFunc(GL_ONE, GL_ONE);

@@ -26,28 +26,38 @@ void C4FoWDrawLightTextureStrategy::Begin(int32_t passPar)
 
 	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 
+	float width = region->getSurface()->Wdt;
+	float height = region->getSurface()->Hgt / 2.0;
+
 	// Set up blend equation, see C4FoWDrawLightTextureStrategy::DrawVertex
 	// for details.
 	switch (pass)
 	{
-		case C4DP_First:
-		default:
-			glBlendFunc(GL_ONE, GL_ONE);
-			glBlendEquationSeparate(GL_FUNC_ADD, GL_MAX);
+		case C4DP_Color:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendEquation(GL_FUNC_ADD);
+			glScissor(0, 0, width, height);
 			break;
 		case C4DP_Second:
 			glBlendFunc(GL_ONE, GL_ONE);
 			glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+			glScissor(0, height, width, height);
 			break;
-		case C4DP_Color:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		case C4DP_First:
+		default:
+			glBlendFunc(GL_ONE, GL_ONE);
+			glBlendEquationSeparate(GL_FUNC_ADD, GL_MAX);
+			glScissor(0, height, width, height);
 			break;
 	}
+
+	glEnable(GL_SCISSOR_TEST);
 }
 
 void C4FoWDrawLightTextureStrategy::End(int32_t pass)
 {
 	glBlendEquation( GL_FUNC_ADD );
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
@@ -77,40 +87,51 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 	//  G_new = BoundBy(BoundBy(G_old + G / 1.5), 0.0, 1.0) - 0.5 / 1.5, 0.0, 1.0)
 	//  B_new = BoundBy(BoundBy(B_old + B / 1.5), 0.0, 1.0) - 0.5 / 1.5, 0.0, 1.0)
 
-	bool debug_draw_color = true;
 	float y_offset = 0.0f;
 
-	//glEnable(GL_SCISSOR_TEST);
-	//glScissor(x, y, width, height);
+	// the other passes draw on the same surface (for now), so I simply disable them for debugging
+	//if (pass != C4DP_Color) return;
 
 	switch (pass)
 	{
 		case C4DP_Color:
-			if (!debug_draw_color)
+			y_offset = region->getSurface()->Hgt / 2;
+
+			// the compiler does not like the definition of r,g,b etc. outside of a block
 			{
-				y_offset = region->getSurface()->Hgt / 2;
+				uint32_t color = light->getColor();
+
+				float a = Min(1.0f, (color >> 24 & 255) / 255.0f);
+				float r = Min(1.0f, (color >> 16 & 255) / 255.0f);
+				float g = Min(1.0f, (color >> 8 & 255) / 255.0f);
+				float b = Min(1.0f, (color >> 0 & 255) / 255.0f);
+
+				// normalize, but multiply for maximal brightness
+				float norm = sqrt(3.0f) / sqrt(r*r + g*g + b*b);
+
+				float min = Min(r, Min(g, b));
+				float max = Max(r, Max(g, b));
+				float lightness = (min + max) / 2.0f;
+
+				float alpha; // 0.0 == fully transparent (takes old color), 1.0 == solid color (takes new color)
+
+				if (shadow) // draw the center of the light
+				{
+					alpha = lightness;
+				}
+				else // draw the edge of the light
+				{
+					alpha = 0.0;
+				}
+
+				glColor4f(norm * r,
+					      norm * g,
+						  norm * b,
+						  alpha);
 			}
-
-			if (true) // the compiler does not like the definition of r,g,b etc. outside of a block; was: if (shadow)
-			{
-				float r = 1.0;
-				float g = 0.0;
-				float b = 1.0;
-
-				float dx = x - light->getX();
-				float dy = y - light->getY();
-				float dist = sqrt(dx*dx + dy*dy);
-				float mult = 1.0f - Min(1.0f / light->getNormalSize(), 1.0f / dist);
-
-				glColor4f(mult * r, mult * g, mult * b, 0.5f);
-			}
-			//else
-			//{
-			//	glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-			//}
 			break;
 		case C4DP_Second:
-			glColor4f(0.0f, 0.5f / 1.5f, 0.5f / 1.5f, 0.0f);
+			glColor4f(0.0f, 0.5f / 1.5f, 0.5f / 1.5f, 0.5f);
 			break;
 		case C4DP_First:
 			if (shadow)
@@ -139,8 +160,6 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 	y += -region->getRegion().y + y_offset;
 
 	glVertex2f(x, y);
-
-	//glDisable(GL_SCISSOR_TEST);
 }
 
 void C4FoWDrawLightTextureStrategy::DrawDarkVertex(float x, float y)

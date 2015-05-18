@@ -31,7 +31,8 @@ C4FoWLight::C4FoWLight(C4Object *pObj)
 	  iSize(20), gBright(0.5),
 	  pNext(NULL),
 	  pObj(pObj),
-	  sections(4)
+	  sections(4),
+	  iColor(-1)
 {
 	sections[0] = new C4FoWLightSection(this,0);
 	sections[1] = new C4FoWLightSection(this,90);
@@ -74,7 +75,7 @@ void C4FoWLight::SetReach(int32_t iReach2, int32_t iFadeout2)
 	}
 }
 
-void C4FoWLight::SetColor(long iValue)
+void C4FoWLight::SetColor(uint32_t iValue)
 {
 	iColor = iValue;
 }
