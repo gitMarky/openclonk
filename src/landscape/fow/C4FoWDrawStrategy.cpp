@@ -89,8 +89,13 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 	float y_offset = 0.0f;
 
-	// the other passes draw on the same surface (for now), so I simply disable them for debugging
-	//if (pass != C4DP_Color) return;
+	uint32_t color = light->getColor();
+
+	float r = Min(1.0f, (color >> 16 & 255) / 255.0f);
+	float g = Min(1.0f, (color >> 8 & 255) / 255.0f);
+	float b = Min(1.0f, (color >> 0 & 255) / 255.0f);
+
+	float value = Max(r, Max(g, b));
 
 	switch (pass)
 	{
@@ -99,35 +104,21 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 			// the compiler does not like the definition of r,g,b etc. outside of a block
 			{
-				uint32_t color = light->getColor();
-
-				float a = Min(1.0f, (color >> 24 & 255) / 255.0f);
-				float r = Min(1.0f, (color >> 16 & 255) / 255.0f);
-				float g = Min(1.0f, (color >> 8 & 255) / 255.0f);
-				float b = Min(1.0f, (color >> 0 & 255) / 255.0f);
-
 				// normalize, but multiply for maximal brightness
 				float norm = sqrt(3.0f) / sqrt(r*r + g*g + b*b);
-
-				float min = Min(r, Min(g, b));
-				float max = Max(r, Max(g, b));
-				float lightness = (min + max) / 2.0f;
 
 				float alpha; // 0.0 == fully transparent (takes old color), 1.0 == solid color (takes new color)
 
 				if (shadow) // draw the center of the light
 				{
-					alpha = lightness;
+					alpha = (1.0 + value) * 0.3;
 				}
 				else // draw the edge of the light
 				{
 					alpha = 0.0;
 				}
 
-				glColor4f(norm * r,
-					      norm * g,
-						  norm * b,
-						  alpha);
+				glColor4f(r, g, b, alpha);
 			}
 			break;
 		case C4DP_Second:
@@ -139,7 +130,7 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 				float dx = x - light->getX();
 				float dy = y - light->getY();
 				float dist = sqrt(dx*dx + dy*dy);
-				float bright = light->getBrightness();
+				float bright = (1.0 + value) * light->getBrightness() / 2.0;
 				float mult = Min(0.5f / light->getNormalSize(), 0.5f / dist);
 				float normX = Clamp(0.5f + dx * mult, 0.0f, 1.0f) / 1.5f;
 				float normY = Clamp(0.5f + dy * mult, 0.0f, 1.0f) / 1.5f;
