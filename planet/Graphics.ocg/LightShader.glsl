@@ -28,7 +28,7 @@ slice(texture+5)
 	vec3  lightDir = extend_normal(vec2(1.0, 1.0) - lightPx.yz * 3.0);
 	
 	// Query light color texture (part of the light texture)
-	vec2 lightColorCoord = lightCoord;
+	vec2 lightColorCoord = lightCoord.st;
 	     lightColorCoord.t = lightCoord.t - 0.5; // offset for the color texture
 	
 	vec4 lightColor = texture2D(lightTex, lightColorCoord.st);

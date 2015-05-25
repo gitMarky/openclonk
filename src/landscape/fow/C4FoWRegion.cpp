@@ -38,7 +38,7 @@ bool C4FoWRegion::BindFramebuf()
 	pBackSurface = pSfc;
 
 	// Can simply reuse old texture?
-	if (!pSurface || pSurface->Wdt < Region.Wdt || pSurface->Hgt < Region.Hgt)
+	if (!pSurface || pSurface->Wdt < Region.Wdt || (pSurface->Hgt / 2) < Region.Hgt)
 	{
 		// Determine texture size. Round up to next power of two in order to
 		// prevent rounding errors, as well as preventing lots of
