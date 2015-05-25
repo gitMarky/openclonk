@@ -95,7 +95,14 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 	float g = Min(1.0f, (color >> 8 & 255) / 255.0f);
 	float b = Min(1.0f, (color >> 0 & 255) / 255.0f);
 
+	float min = Min(r, Min(g, b));
 	float value = Max(r, Max(g, b));
+	float lightness = (min + value) / 2.0f;
+
+	// maximize color, so that dark colors will not be desaturated after normalization
+	r /= value;
+	g /= value;
+	b /= value;
 
 	switch (pass)
 	{
@@ -111,7 +118,7 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 				if (shadow) // draw the center of the light
 				{
-					alpha = (1.0 + value) * 0.3;
+					alpha = 0.3 + 0.6 * value * lightness;
 				}
 				else // draw the edge of the light
 				{
@@ -130,7 +137,7 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 				float dx = x - light->getX();
 				float dy = y - light->getY();
 				float dist = sqrt(dx*dx + dy*dy);
-				float bright = (1.0 + value) * light->getBrightness() / 2.0;
+				float bright = value * light->getBrightness();
 				float mult = Min(0.5f / light->getNormalSize(), 0.5f / dist);
 				float normX = Clamp(0.5f + dx * mult, 0.0f, 1.0f) / 1.5f;
 				float normY = Clamp(0.5f + dy * mult, 0.0f, 1.0f) / 1.5f;
