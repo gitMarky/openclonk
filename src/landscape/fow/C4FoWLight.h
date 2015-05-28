@@ -40,8 +40,12 @@ private:
 	int32_t iReach; // maximum length of beams
 	int32_t iFadeout; // number of pixels over which beams fade out
 	int32_t iSize; // size of the light source. Decides smoothness of shadows
-	float gBright; // brigtness of the light source. 1.0 is maximum.
-	uint32_t iColor; // color of the light source.
+	float gBright; // brightness of the light source. 1.0 is maximum.
+	float colorR; // red color component of the light source. 1.0 is maximum.
+	float colorG; // green color component of the light source. 1.0 is maximum.
+	float colorB; // blue color component of the light source. 1.0 is maximum.
+	float colorV; // color value. 1.0 is maximum.
+	float colorL; // color lightness. 1.0 is maximum.
 	C4FoWLight *pNext;
 	C4Object *pObj; // Associated object
 
@@ -55,8 +59,12 @@ public:
 	int32_t getTotalReach() const { return iReach + iFadeout; }
 	int32_t getSize() const { return iSize; }
 	int32_t getNormalSize() const { return iSize * 2; }
-	uint32_t getColor() const { return iColor; };
-	float getBrightness() const { return gBright; }
+	float getBrightness() const { return colorV * gBright; }
+	float getR() const { return colorR; }
+	float getG() const { return colorG; }
+	float getB() const { return colorB; }
+	float getValue() const { return colorV; }
+	float getLightness() const { return colorL; }
 	C4FoWLight *getNext() const { return pNext; }
 	C4Object *getObj() const { return pObj; }
 

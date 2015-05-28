@@ -151,7 +151,7 @@ void C4FoWRegion::Render(const C4TargetFacet *pOnScreen)
 
 	// clear lower half of texture
 	glScissor(0, 0, getSurface()->Wdt, getSurface()->Hgt / 2.0);
-	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glEnable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glDisable(GL_SCISSOR_TEST);

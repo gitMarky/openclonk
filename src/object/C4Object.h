@@ -322,6 +322,7 @@ public:
 	int32_t GetValue(C4Object *pInBase, int32_t iForPlayer);
 	bool SetOwner(int32_t iOwner);
 	bool SetLightRange(int32_t iToRange, int32_t iToFadeoutRange);
+	long GetLightColor() const { return lightColor; }
 	bool SetLightColor(long iValue);
 	void SetOnFire(bool OnFire) { this->OnFire = OnFire; SetOCF(); }
 	bool GetOnFire() const { return OnFire; }

@@ -89,21 +89,6 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 	float y_offset = 0.0f;
 
-	uint32_t color = light->getColor();
-
-	float r = Min(1.0f, (color >> 16 & 255) / 255.0f);
-	float g = Min(1.0f, (color >> 8 & 255) / 255.0f);
-	float b = Min(1.0f, (color >> 0 & 255) / 255.0f);
-
-	float min = Min(r, Min(g, b));
-	float value = Max(r, Max(g, b));
-	float lightness = (min + value) / 2.0f;
-
-	// maximize color, so that dark colors will not be desaturated after normalization
-	r /= value;
-	g /= value;
-	b /= value;
-
 	switch (pass)
 	{
 		case C4DP_Color:
@@ -111,21 +96,18 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 			// the compiler does not like the definition of r,g,b etc. outside of a block
 			{
-				// normalize, but multiply for maximal brightness
-				float norm = sqrt(3.0f) / sqrt(r*r + g*g + b*b);
-
 				float alpha; // 0.0 == fully transparent (takes old color), 1.0 == solid color (takes new color)
 
 				if (shadow) // draw the center of the light
 				{
-					alpha = 0.3 + 0.6 * value * lightness;
+					alpha = 0.3 + 0.6 * light->getValue() * light->getLightness();
 				}
 				else // draw the edge of the light
 				{
 					alpha = 0.0;
 				}
 
-				glColor4f(r, g, b, alpha);
+				glColor4f(light->getR(), light->getG(), light->getB(), alpha);
 			}
 			break;
 		case C4DP_Second:
@@ -137,7 +119,7 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 				float dx = x - light->getX();
 				float dy = y - light->getY();
 				float dist = sqrt(dx*dx + dy*dy);
-				float bright = value * light->getBrightness();
+				float bright = light->getBrightness();
 				float mult = Min(0.5f / light->getNormalSize(), 0.5f / dist);
 				float normX = Clamp(0.5f + dx * mult, 0.0f, 1.0f) / 1.5f;
 				float normY = Clamp(0.5f + dy * mult, 0.0f, 1.0f) / 1.5f;
