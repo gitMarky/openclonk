@@ -42,11 +42,21 @@ private:
 	unsigned int SizeY;
 	// Brightness (not premultiplied)
 	double Brightness;
+	// Color information
+	uint32_t Color;
+	float colorR;
+	float colorG;
+	float colorB;
 public:
 	void Clear();
 
 	void SetBrightness(double brightness) { Brightness = brightness; }
 	double GetBrightness() const { return Brightness; }
+	void SetColor(uint32_t Value);
+	uint32_t GetColor() const { return Color; }
+	float GetR() const { return colorR; }
+	float GetG() const { return colorG; }
+	float GetB() const { return colorB; }
 
 	// High resolution will make the map coarser, but speed up the generation process
 	// and save video memory.

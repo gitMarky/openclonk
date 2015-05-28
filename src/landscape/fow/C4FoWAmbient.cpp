@@ -86,6 +86,7 @@ struct LightMapZoom {
 C4FoWAmbient::C4FoWAmbient() :
 	Tex(0), Resolution(0.), Radius(0.), FullCoverage(0.),
 	SizeX(0), LandscapeX(0), SizeY(0), LandscapeY(0),
+	Color(-8355712), colorR(0.5f), colorG(0.5f), colorB(0.5f),
 	Brightness(1.)
 {
 }
@@ -212,4 +213,13 @@ void C4FoWAmbient::GetFragTransform(const FLOAT_RECT& vpRect, const C4Rect& clip
 
 	// Extract matrix
 	trans.Get2x3(ambientTransform);
+}
+
+void C4FoWAmbient::SetColor(uint32_t Value)
+{
+	Color = Value;
+
+	colorR = Min(1.0f, (Value >> 16 & 255) / 255.0f);
+	colorG = Min(1.0f, (Value >> 8 & 255) / 255.0f);
+	colorB = Min(1.0f, (Value >> 0 & 255) / 255.0f);
 }
