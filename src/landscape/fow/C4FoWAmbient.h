@@ -47,11 +47,12 @@ private:
 	float colorR;
 	float colorG;
 	float colorB;
+	float colorV; // color value. 1.0 is maximum.
 public:
 	void Clear();
 
 	void SetBrightness(double brightness) { Brightness = brightness; }
-	double GetBrightness() const { return Brightness; }
+	double GetBrightness() const { return colorV * Brightness; }
 	void SetColor(uint32_t Value);
 	uint32_t GetColor() const { return Color; }
 	float GetR() const { return colorR; }

@@ -86,7 +86,7 @@ struct LightMapZoom {
 C4FoWAmbient::C4FoWAmbient() :
 	Tex(0), Resolution(0.), Radius(0.), FullCoverage(0.),
 	SizeX(0), LandscapeX(0), SizeY(0), LandscapeY(0),
-	Color(-8355712), colorR(0.5f), colorG(0.5f), colorB(0.5f),
+	Color(-1), colorR(0.577f), colorG(0.577f), colorB(0.577f), colorV(1.0f),
 	Brightness(1.)
 {
 }
@@ -222,4 +222,13 @@ void C4FoWAmbient::SetColor(uint32_t Value)
 	colorR = Min(1.0f, (Value >> 16 & 255) / 255.0f);
 	colorG = Min(1.0f, (Value >> 8 & 255) / 255.0f);
 	colorB = Min(1.0f, (Value >> 0 & 255) / 255.0f);
+
+	colorV = Max(colorR, Max(colorG, colorB));
+
+	// normalize color right away, so that blending stays smooth
+	float norm = sqrt(pow(colorR, 2.0) + pow(colorG, 2.0) + pow(colorB, 2.0));
+
+	colorR /= norm;
+	colorG /= norm;
+	colorB /= norm;
 }
