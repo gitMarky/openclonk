@@ -184,11 +184,11 @@ private func DoSkyShade()
 	else
 		night = true;
 	
-	var skyshade = [0,0,0,0]; //R,G,B,A
-	var nightcolour = [10,25,40]; // default darkest-night colour
-	var daycolour = [255,255,255];
-	var sunsetcolour = [140,45,10];
-	var sunrisecolour = [140,100,70];
+	var skyshade =      [  0,  0,  0,0,0,0]; //R,G,B,A, blending percent sky, blending percent ambient light
+	var nightcolour =   [ 10, 25, 40,0,10,90]; // default darkest-night colour
+	var daycolour =     [255,255,255,0,30,70];
+	var sunsetcolour =  [140, 45, 10,0,70,50];
+	var sunrisecolour = [140,100, 70,0,70,50];
 	
 	if (!day)
 	{
@@ -208,7 +208,7 @@ private func DoSkyShade()
 		// progress in 0..1800
 		var progress = time_since_sunrise * 1800 / (time_set["SunriseEnd"] - time_set["SunriseStart"]);
 	
-		for(var i=0; i<3; ++i)
+		for(var i=0; i<6; ++i)
 		{
 			var nightfade = Cos(progress/2, nightcolour[i],10);
 			var dayfade = daycolour[i] - Cos(progress/2, daycolour[i],10);
@@ -227,6 +227,9 @@ private func DoSkyShade()
 		skyshade[2] = 255;
 		
 		skyshade[3] = 255;
+		
+		skyshade[4] = daycolour[4];
+		skyshade[5] = daycolour[5];
 	}
 	// Sunset
 	else if (sunset)
@@ -235,7 +238,7 @@ private func DoSkyShade()
 		// progress in 0..1800
 		var progress = time_since_sunset * 1800 / (time_set["SunsetEnd"] - time_set["SunsetStart"]);
 		
-		for(var i=0; i<3; ++i)
+		for(var i=0; i<6; ++i)
 		{
 			var dayfade = Cos(progress/2, daycolour[i],10);
 			var nightfade = nightcolour[i] - Cos(progress/2, nightcolour[i],10);
@@ -254,11 +257,15 @@ private func DoSkyShade()
 		skyshade[2] = nightcolour[2];
 		
 		skyshade[3] = 0;
+		skyshade[4] = nightcolour[4];
+		skyshade[5] = nightcolour[5];
 	}
 	
 	// Shade sky.
-	SetSkyAdjust(RGB(skyshade[0], skyshade[1], skyshade[2]));
-	
+	//SetSkyAdjust(RGB(skyshade[0], skyshade[1], skyshade[2]));
+	SetSkyAdjust(BlendRGB(skyshade[0], skyshade[1], skyshade[2], skyshade[4]));
+	SetAmbientColor(BlendRGB(skyshade[0], skyshade[1], skyshade[2], skyshade[5]));
+
 	// Shade landscape.
 	var gamma = [0,0,0];
 	var min_gamma = [30,75,120]; 
@@ -306,6 +313,21 @@ func SaveScenarioObject(props)
 	if (GetTime() != 43200) props->AddCall("Time", this, "SetTime", GetTime());
 	if (GetCycleSpeed() != 30) props->AddCall("CycleSpeed", this, "SetCycleSpeed", GetCycleSpeed());
 	return true;
+}
+
+/* Blends the color with white */
+private func BlendRGB(int r, int g, int b, int percent)
+{
+	var hundred = 100;
+	percent = BoundBy(percent, 0, hundred);
+	var inverse = hundred - percent;
+	var white = 255;
+	
+	r = (percent * r + inverse * white) / hundred;
+	g = (percent * g + inverse * white) / hundred;
+	b = (percent * b + inverse * white) / hundred;
+	
+	return RGB(r, g, b);
 }
 
 
