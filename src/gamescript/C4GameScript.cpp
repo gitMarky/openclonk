@@ -445,13 +445,13 @@ static bool FnGBackSky(C4PropList * _this, long x, long y)
 	return !GBackIFT(x, y);
 }
 
-static long FnExtractMaterialAmount(C4PropList * _this, long x, long y, long mat, long amount)
+static long FnExtractMaterialAmount(C4PropList * _this, long x, long y, long mat, long amount, bool distant_first)
 {
 	if (Object(_this)) { x+=Object(_this)->GetX(); y+=Object(_this)->GetY(); }
 	long extracted=0; for (; extracted<amount; extracted++)
 	{
 		if (GBackMat(x,y)!=mat) return extracted;
-		if (::Landscape.ExtractMaterial(x,y)!=mat) return extracted;
+		if (::Landscape.ExtractMaterial(x,y,distant_first)!=mat) return extracted;
 	}
 	return extracted;
 }
@@ -1147,20 +1147,6 @@ static long FnGetAmbientBrightness(C4PropList * _this)
 	return static_cast<long>(::Landscape.pFoW->Ambient.GetBrightness() * 100. + 0.5);
 }
 
-static C4Void FnSetAmbientColor(C4PropList * _this, long iBrightness)
-{
-	if (::Landscape.pFoW)
-		::Landscape.pFoW->Ambient.SetColor(iBrightness);
-	return C4Void();
-}
-
-static long FnGetAmbientColor(C4PropList * _this)
-{
-	if (!::Landscape.pFoW)
-		return -1;
-	return static_cast<long>(::Landscape.pFoW->Ambient.GetColor());
-}
-
 static C4Void FnSetSeason(C4PropList * _this, long iSeason)
 {
 	::Weather.SetSeason(iSeason);
@@ -1363,7 +1349,6 @@ static bool FnGetMissionAccess(C4PropList * _this, C4String *strMissionAccess)
 	if (::Control.SyncMode())
 		Log("Warning: using GetMissionAccess may cause desyncs when playing records!");
 
-	if (!Config.General.MissionAccess) return false;
 	return SIsModule(Config.General.MissionAccess, FnStringPar(strMissionAccess));
 }
 
@@ -2659,8 +2644,6 @@ void InitGameFunctionMap(C4AulScriptEngine *pEngine)
 	AddFunc(pEngine, "LandscapeHeight", FnLandscapeHeight);
 	AddFunc(pEngine, "SetAmbientBrightness", FnSetAmbientBrightness);
 	AddFunc(pEngine, "GetAmbientBrightness", FnGetAmbientBrightness);
-	AddFunc(pEngine, "SetAmbientColor", FnSetAmbientColor);
-	AddFunc(pEngine, "GetAmbientColor", FnGetAmbientColor);
 	AddFunc(pEngine, "SetSeason", FnSetSeason);
 	AddFunc(pEngine, "GetSeason", FnGetSeason);
 	AddFunc(pEngine, "SetClimate", FnSetClimate);
@@ -2849,6 +2832,7 @@ C4ScriptConstDef C4ScriptGameConstMap[]=
 	{ "C4FO_Controller"           ,C4V_Int,     C4FO_Controller     },
 	{ "C4FO_Func"                 ,C4V_Int,     C4FO_Func           },
 	{ "C4FO_Layer"                ,C4V_Int,     C4FO_Layer          },
+	{ "C4FO_InArray"              ,C4V_Int,     C4FO_InArray        },
 
 	{ "MD_DragSource"             ,C4V_Int,     C4MC_MD_DragSource  },
 	{ "MD_DropTarget"             ,C4V_Int,     C4MC_MD_DropTarget  },

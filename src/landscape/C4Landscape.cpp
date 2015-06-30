@@ -861,11 +861,11 @@ void C4Landscape::RaiseTerrain(int32_t tx, int32_t ty, int32_t wdt)
 }
 
 
-int32_t C4Landscape::ExtractMaterial(int32_t fx, int32_t fy)
+int32_t C4Landscape::ExtractMaterial(int32_t fx, int32_t fy, bool distant_first)
 {
 	int32_t mat=GetMat(fx,fy);
 	if (mat==MNone) return MNone;
-	FindMatTop(mat,fx,fy);
+	FindMatTop(mat,fx,fy,distant_first);
 	ClearPix(fx,fy);
 	CheckInstabilityRange(fx,fy);
 	return mat;
@@ -1227,6 +1227,21 @@ void C4Landscape::CompileFunc(StdCompiler *pComp)
 	pComp->Value(mkNamingAdapt(mkCastIntAdapt(Gravity), "Gravity",           DefaultGravAccel));
 	pComp->Value(mkNamingAdapt(Modulation,          "MatModulation",         0U));
 	pComp->Value(mkNamingAdapt(Mode,                "Mode",                  C4LSC_Undefined));
+
+	if(pComp->isCompiler())
+	{
+		int32_t ambient_brightness;
+		pComp->Value(mkNamingAdapt(ambient_brightness,       "AmbientBrightness", 1.0));
+		if(pFoW) pFoW->Ambient.SetBrightness(ambient_brightness / static_cast<double>(255));
+	}
+	else
+	{
+		if(pFoW)
+		{
+			int32_t ambient_brightness = static_cast<int32_t>(pFoW->Ambient.GetBrightness() * 255 + 0.5);
+			pComp->Value(mkNamingAdapt(ambient_brightness,       "AmbientBrightness", 255));
+		}
+	}
 }
 
 static CSurface8 *GroupReadSurface8(C4Group &hGroup, const char *szWildCard)
@@ -1422,12 +1437,6 @@ bool C4Landscape::Init(C4Group &hGroup, bool fOverloadCurrent, bool fLoadSky, bo
 		pLandscapeRender->Update(C4Rect(0, 0, Width, Height), this);
 		Game.SetInitProgress(87);
 	}
-	if (Config.General.DebugRec)
-	{
-		AddDbgRec(RCT_Block, "|---LS---|", 11);
-		AddDbgRec(RCT_Ls, Surface8->Bits, Surface8->Pitch*Surface8->Hgt);
-	}
-
 
 	// Create pixel count array
 	// We will use 15x17 blocks so the pixel count can't get over 255.
@@ -1464,17 +1473,6 @@ bool C4Landscape::Save(C4Group &hGroup) const
 	bool r = SaveInternal(hGroup);
 	C4SolidMask::PutSolidMasks();
 	return r;
-}
-
-bool C4Landscape::DebugSave(const char *szFilename) const
-{
-	// debug: Save 8 bit data landscape only, without doing any SolidMask-removal-stuff
-	bool fSuccess = false;
-	if (Surface8)
-	{
-		fSuccess = Surface8->Save(szFilename);
-	}
-	return fSuccess;
 }
 
 bool C4Landscape::SaveInternal(C4Group &hGroup) const
@@ -3015,9 +3013,9 @@ int32_t C4Landscape::AreaSolidCount(int32_t x, int32_t y, int32_t wdt, int32_t h
 	return ascnt;
 }
 
-void C4Landscape::FindMatTop(int32_t mat, int32_t &x, int32_t &y) const
+void C4Landscape::FindMatTop(int32_t mat, int32_t &x, int32_t &y, bool distant_first) const
 {
-	int32_t mslide,cslide,tslide; // tslide 0 none 1 left 2 right
+	int32_t mslide,cslide,tslide,distant_x=0;
 	bool fLeft,fRight;
 
 	if (!MatValid(mat)) return;
@@ -3025,32 +3023,43 @@ void C4Landscape::FindMatTop(int32_t mat, int32_t &x, int32_t &y) const
 
 	do
 	{
+		// Catch most common case: Walk upwards until material changes
+		while (GetMat(x,y-1)==mat) --y;
 
 		// Find upwards slide
-		fLeft=true; fRight=true; tslide=0;
-		for (cslide=0; (cslide<=mslide) && (fLeft || fRight); cslide++)
+		fLeft=true; fRight=true; tslide=0; distant_x=x;
+		for (cslide=1; (cslide<=mslide) && (fLeft || fRight); cslide++)
 		{
 			// Left
 			if (fLeft)
 			{
 				if (GetMat(x-cslide,y)!=mat) fLeft=false;
-				else if (GetMat(x-cslide,y-1)==mat) { tslide=1; break; }
+				else
+				{
+					distant_x = x-cslide;
+					if (GetMat(distant_x,y-1)==mat) { tslide=-cslide; break; }
+				}
 			}
 			// Right
 			if (fRight)
 			{
 				if (GetMat(x+cslide,y)!=mat) fRight=false;
-				else if (GetMat(x+cslide,y-1)==mat) { tslide=2; break; }
+				else
+				{
+					distant_x = x+cslide;
+					if (GetMat(distant_x,y-1)==mat) { tslide=+cslide; break; }
+				}
 			}
 		}
 
 		// Slide
-		if (tslide==1) { x-=cslide; y--; }
-		if (tslide==2) { x+=cslide; y--; }
-
+		if (tslide) { x+=tslide; y--; }
 
 	}
 	while (tslide);
+
+	// return top pixel max slide away from center if desired
+	if (distant_first) x = distant_x;
 
 }
 /* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */

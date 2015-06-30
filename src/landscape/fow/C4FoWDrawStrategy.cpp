@@ -14,11 +14,21 @@
  */
 
 #include "C4Include.h"
+
+#ifndef USE_CONSOLE
+
 #include "C4FoWDrawStrategy.h"
 #include "C4FoWLight.h"
 #include "C4FoWRegion.h"
 #include "C4DrawGL.h"
 
+enum C4DrawPass
+{
+	C4DP_First = 0,
+	C4DP_Second = 1,
+	C4DP_Color = 2,
+	C4DP_Last
+};
 
 void C4FoWDrawLightTextureStrategy::Begin(int32_t passPar)
 {
@@ -33,21 +43,23 @@ void C4FoWDrawLightTextureStrategy::Begin(int32_t passPar)
 	// for details.
 	switch (pass)
 	{
-		case C4DP_Color:
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glBlendEquation(GL_FUNC_ADD);
-			glScissor(0, 0, width, height);
+		case C4DP_First:
+			glBlendFunc(GL_ONE, GL_ONE);
+			glBlendEquationSeparate(GL_FUNC_ADD, GL_MAX);
+			glScissor(0, height, width, height);
 			break;
 		case C4DP_Second:
 			glBlendFunc(GL_ONE, GL_ONE);
 			glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
 			glScissor(0, height, width, height);
 			break;
-		case C4DP_First:
+		case C4DP_Color:
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendEquation(GL_FUNC_ADD);
+			glScissor(0, 0, width, height);
+			break;
 		default:
-			glBlendFunc(GL_ONE, GL_ONE);
-			glBlendEquationSeparate(GL_FUNC_ADD, GL_MAX);
-			glScissor(0, height, width, height);
+			assert(false);
 			break;
 	}
 
@@ -91,28 +103,6 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 
 	switch (pass)
 	{
-		case C4DP_Color:
-			y_offset = region->getSurface()->Hgt / 2;
-
-			// the compiler does not like the definition of r,g,b etc. outside of a block
-			{
-				float alpha; // 0.0 == fully transparent (takes old color), 1.0 == solid color (takes new color)
-
-				if (shadow) // draw the center of the light
-				{
-					alpha = 0.3 + 0.6 * light->getValue() * light->getLightness();
-				}
-				else // draw the edge of the light
-				{
-					alpha = 0.0;
-				}
-
-				glColor4f(light->getR(), light->getG(), light->getB(), alpha);
-			}
-			break;
-		case C4DP_Second:
-			glColor4f(0.0f, 0.5f / 1.5f, 0.5f / 1.5f, 0.5f);
-			break;
 		case C4DP_First:
 			if (shadow)
 			{
@@ -130,6 +120,27 @@ void C4FoWDrawLightTextureStrategy::DrawVertex(float x, float y, bool shadow)
 				glColor4f(0.0f, 0.5f / 1.5f, 0.5f / 1.5f, 0.0f);
 			}
 			break;
+		case C4DP_Second:
+			glColor4f(0.0f, 0.5f / 1.5f, 0.5f / 1.5f, 0.5f);
+			break;
+		case C4DP_Color: // has a block so that alpha is scoped to this block only
+		{
+			y_offset = region->getSurface()->Hgt / 2;
+
+			float alpha; // 0.0 == fully transparent (takes old color), 1.0 == solid color (takes new color)
+
+			if (shadow) // draw the center of the light
+			{
+				alpha = 0.3 + 0.6 * light->getValue() * light->getLightness();
+			}
+			else // draw the edge of the light
+			{
+				alpha = 0.0;
+			}
+
+			glColor4f(light->getR(), light->getG(), light->getB(), alpha);
+			break;
+		}
 		default:
 			glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
 			break;
@@ -197,3 +208,4 @@ void C4FoWDrawWireframeStrategy::DrawLightVertex(float x, float y)
 	DrawVertex(x, y);
 }
 
+#endif

@@ -9,7 +9,13 @@ uniform sampler2D lightTex;
 // yellow: light up, blue: light down, turqoise: light right, pink: light left
 // brightness: light strength
 //#define LIGHT_DEBUG
+
+// uncomment the following lines for debugging light color:
+// the light will always come from the front and have a uniform brightness.
 //#define LIGHT_DEBUG_COLOR
+
+// uncomment the following lines to set the light color to pink for all lights for debugging:
+//#define LIGHT_DEBUG_PINK
 
 // At what point of light intensity we set the "darkness" point. This
 // is to compensate for the fact that the engine "smooths" the light
@@ -28,8 +34,7 @@ slice(texture+5)
 	vec3  lightDir = extend_normal(vec2(1.0, 1.0) - lightPx.yz * 3.0);
 	
 	// Query light color texture (part of the light texture)
-	vec2 lightColorCoord = lightCoord.st;
-	     lightColorCoord.t = lightCoord.t - 0.5; // offset for the color texture
+	vec2 lightColorCoord = lightCoord.st - vec2(0.0, 0.5); // subtract offset for the color texture
 	
 	vec4 lightColor = texture2D(lightTex, lightColorCoord.st);
 	
@@ -58,10 +63,11 @@ slice(light)
 
 slice(color+5)
 {
-    // pink shade for debugging!
-	//lightColor = vec4(1.0, 0.0, 1.0, 1.0);
-	//lightColor = vec4(1.0, 1.0, 1.0, 1.0);
-	
+	// pink shade for debugging!
+	#ifdef LIGHT_DEBUG_PINK
+		lightColor = vec4(1.0, 0.0, 1.0, 1.0);
+	#endif
+
 	lightColor.rgb = sqrt(3.0) * normalize(lightColor.rgb);
 
 	// Add light

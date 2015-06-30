@@ -59,6 +59,7 @@ public:
 
 	virtual void AddShaderSlices(C4Shader& shader, int ssc)
 	{
+#ifndef USE_CONSOLE
 		// Add mesh-independent slices
 		shader.AddFragmentSlice(-1, "#define OPENCLONK");
 		shader.AddVertexSlice(-1, "#define OPENCLONK");
@@ -80,6 +81,7 @@ public:
 
 		if (ssc & C4SSC_BASE) shader.LoadSlices(&::GraphicsResource.Files, "SpriteTextureShader.glsl");
 		if (ssc & C4SSC_OVERLAY) shader.LoadSlices(&::GraphicsResource.Files, "SpriteOverlayShader.glsl");
+#endif
 	}
 
 private:
@@ -100,7 +102,6 @@ void C4Def::DefaultDefCore()
 	TopFace.Default();
 	Component.Default();
 	BurnTurnTo=C4ID::None;
-	BuildTurnTo=C4ID::None;
 	GrowthType=0;
 	CrewMember=0;
 	NativeCrew=0;
@@ -233,7 +234,6 @@ void C4Def::CompileFunc(StdCompiler *pComp)
 	pComp->Value(mkNamingAdapt(CrewMember,                    "CrewMember",         0                 ));
 	pComp->Value(mkNamingAdapt(NativeCrew,                    "NoStandardCrew",     0                 ));
 	pComp->Value(mkNamingAdapt(Constructable,                 "Construction",       0                 ));
-	pComp->Value(mkNamingAdapt(BuildTurnTo,                   "ConstructTo",        C4ID::None        ));
 
 	const StdBitfieldEntry<int32_t> GrabPutGetTypes[] =
 	{

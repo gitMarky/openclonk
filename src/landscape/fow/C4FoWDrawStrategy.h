@@ -16,19 +16,14 @@
 #ifndef C4FOWDRAWSTRATEGY_H
 #define C4FOWDRAWSTRATEGY_H
 
+#ifndef USE_CONSOLE
+
 #include "C4DrawGL.h"
 #include <list>
 
 class C4FoWRegion;
 class C4TargetFacet;
 class C4FoWLight;
-
-enum C4DrawPass
-{
-	C4DP_First = 0,
-	C4DP_Second = 1,
-	C4DP_Color = 2
-};
 
 /** A C4FoWDrawStrategy is a connector to OpenGL calls used to draw the light.
    C4FoWLight tells this class which part of the light should be drawn now
@@ -127,5 +122,7 @@ private:
 	const C4FoWLight* light;
 	const C4TargetFacet* screen;
 };
+
+#endif
 
 #endif

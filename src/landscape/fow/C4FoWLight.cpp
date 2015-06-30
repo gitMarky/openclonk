@@ -14,6 +14,9 @@
  */
 
 #include "C4Include.h"
+
+#ifndef USE_CONSOLE
+
 #include "C4FoWLight.h"
 #include "C4FoWLightSection.h"
 #include "C4FoWBeamTriangle.h"
@@ -77,18 +80,18 @@ void C4FoWLight::SetReach(int32_t iReach2, int32_t iFadeout2)
 
 void C4FoWLight::SetColor(uint32_t iValue)
 {
-	colorR = Min(1.0f, (iValue >> 16 & 255) / 255.0f);
-	colorG = Min(1.0f, (iValue >> 8 & 255) / 255.0f);
-	colorB = Min(1.0f, (iValue >> 0 & 255) / 255.0f);
+	colorR = (GetRedValue(iValue) & 255) / 255.0f;
+	colorG = (GetGreenValue(iValue) & 255) / 255.0f;
+	colorB = (GetBlueValue(iValue) & 255) / 255.0f;
 
 	float min = Min(colorR, Min(colorG, colorB));
-	colorV = Max(colorR, Max(colorG, colorB));
+	colorV = Max(Max(colorR, Max(colorG, colorB)), 1e-3f); // prevent division by 0
 	colorL = (min + colorV) / 2.0f;
 
 	// maximize color, so that dark colors will not be desaturated after normalization
-	colorR /= colorV;
-	colorG /= colorV;
-	colorB /= colorV;
+	colorR = Min(colorR / colorV, 1.0f);
+	colorG = Min(colorG / colorV, 1.0f);
+	colorB = Min(colorB / colorV, 1.0f);
 }
 
 void C4FoWLight::Update(C4Rect Rec)
@@ -155,13 +158,10 @@ void C4FoWLight::CalculateFanMaxed(TriangleList &triangles) const
 
 		// Is the left point close enough that normals don't max out?
 		float dist = sqrt(GetSquaredDistanceTo(tri.fanLX, tri.fanLY));
-		if (dist <= getNormalSize())
-		{
+		if (dist <= getNormalSize()) {
 			tri.nfanLX = tri.fanLX;
 			tri.nfanLY = tri.fanLY;
-		}
-		else
-		{
+		} else {
 			// Otherwise, calculate point where they do. We will add a seperate
 			// triangle/quad later on to capture that.
 			float f = float(getNormalSize() / dist);
@@ -171,13 +171,10 @@ void C4FoWLight::CalculateFanMaxed(TriangleList &triangles) const
 
 		// Same for the right point
 		dist = sqrt(GetSquaredDistanceTo(tri.fanRX, tri.fanRY));
-		if (dist <= getNormalSize())
-		{
+		if (dist <= getNormalSize()) {
 			tri.nfanRX = tri.fanRX;
 			tri.nfanRY = tri.fanRY;
-		}
-		else
-		{
+		} else {
 			float f = float(getNormalSize()) / dist;
 			tri.nfanRX = f * tri.fanRX + (1.0f - f) * getX();
 			tri.nfanRY = f * tri.fanRY + (1.0f - f) * getY();
@@ -213,8 +210,7 @@ void C4FoWLight::CalculateIntermediateFadeTriangles(TriangleList &triangles) con
 				
 		// an extra intermediate fade point is only necessary on cliffs
 		tri.descending = distFanR > distNextFanL;
-		if (tri.descending)
-		{
+		if (tri.descending)	{
 			if (distFanR < distNextFadeL)
 			{
 				tri.fadeIX = nextTri.fadeLX;
@@ -241,7 +237,6 @@ void C4FoWLight::CalculateIntermediateFadeTriangles(TriangleList &triangles) con
 				ProjectPointOutward(tri.fadeIX, tri.fadeIY, sqrt(distNextFadeL));
 			}
 		}
-
 	}
 }
 
@@ -368,3 +363,5 @@ bool C4FoWLight::IsVisibleForPlayer(C4Player *player) const
 	if (!pObj || !player) return true;
 	return !::Hostile(pObj->Owner,player->Number);
 }
+
+#endif

@@ -27,7 +27,9 @@ public:
 	C4FoWAmbient();
 	~C4FoWAmbient();
 
+#ifndef USE_CONSOLE
 	GLuint Tex;
+#endif
 
 private:
 	// Parameters
@@ -58,6 +60,7 @@ public:
 	float GetR() const { return colorR; }
 	float GetG() const { return colorG; }
 	float GetB() const { return colorB; }
+
 
 	// High resolution will make the map coarser, but speed up the generation process
 	// and save video memory.
