@@ -1,0 +1,2 @@
+MsgBuy=Buy Stuff
+YourWealth=Your wealth

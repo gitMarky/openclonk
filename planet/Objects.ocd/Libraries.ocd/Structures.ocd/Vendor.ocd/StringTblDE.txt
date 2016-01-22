@@ -1,0 +1,2 @@
+MsgBuy=Einkaufen
+YourWealth=Dein Kontostand
