@@ -1,2 +1,3 @@
 MsgBuy=Einkaufen
+MsgSell=Verkaufen
 YourWealth=Dein Kontostand

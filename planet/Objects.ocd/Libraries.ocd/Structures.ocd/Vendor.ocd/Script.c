@@ -46,11 +46,40 @@ func ChangeBuyableAmount(int iPayPlr, id idDef, int amount)
 
 // ----- Selling
 
+func GetSellableItems(object container)
+{
+	var items = []; // TODO
+	return items;
+}
+
+func GetSellableAmount(int iPayPlr, id idDef)
+{
+	return 0; // TODO
+}
+
 // returns the value of the object if sold in this base
 func GetSellValue(object pObj)
 {
 	// By default call the engine function
 	return pObj->GetValue();
+}
+
+// ----- Menu entries
+
+func Definition(id def)
+{
+	_inherited(...);
+	
+	// default design of a control menu item
+	if (def.lib_vendor == nil) def.lib_vendor = {};
+	def.lib_vendor.custom_entry = 
+	{
+		Right = "4em", Bottom = "2em",
+		BackgroundColor = {Std = 0, OnHover = 0x50ff0000},
+		image = {Right = "2em", Style = GUI_TextBottom | GUI_TextRight},
+		price = {Left = "2em", Priority = 3}
+	};
+	
 }
 
 
@@ -173,11 +202,17 @@ func FxIntVendorTimer(object target, proplist effect, int time)
 
 // -------------------------- Menus -------------------------------------
 
+// ----- generic things
+
 // Provides an interaction menu for buying things.
 public func HasInteractionMenu() { return true; }
 
 // Interface for custom buy conditions
 public func AllowBuyMenuEntries(){ return ObjectCount(Find_ID(Rule_BuyAtFlagpole));}
+
+// Interface for custom sell conditions
+public func AllowSellMenuEntries(){ return AllowBuyMenuEntries(); }
+
 
 public func GetInteractionMenus(object clonk)
 {
@@ -197,20 +232,43 @@ public func GetInteractionMenus(object clonk)
 		PushBack(menus, buy_menu);
 	}
 	
+	if (AllowSellMenuEntries())
+	{
+		var sell_menu =
+		{
+			title = "$MsgSell$",
+			entries_callback = this.GetSellMenuEntries,
+			callback = "OnSellMenuSelection",
+			callback_target = this,
+			BackgroundColor = RGB(50, 50, 0),
+			Priority = 10
+		};
+		PushBack(menus, sell_menu);
+	}
+	
 	return menus;
 }
 
-public func GetBuyMenuEntries(object clonk)
+func GetBuyOrSellMenuEntry(int index, object item, int amount, int value)
 {
-	// default design of a control menu item
-	var custom_entry = 
+	var entry = 
 	{
-		Right = "4em", Bottom = "2em",
-		BackgroundColor = {Std = 0, OnHover = 0x50ff0000},
-		image = {Right = "2em", Style = GUI_TextBottom | GUI_TextRight},
-		price = {Left = "2em", Priority = 3}
+		Prototype = lib_vendor.custom_entry,
+		image = {Prototype = lib_vendor.custom_entry.image},
+		price = {Prototype = lib_vendor.custom_entry.price}
 	};
-	
+	entry.image.Symbol = item;
+	entry.image.Text = Format("%dx", amount);
+	entry.price.Text = Format("<c ffff00>%d{{Icon_Wealth}}</c>", value);
+	entry.Priority = 1000 * value + index; // Order by value and then by BaseMaterial index.
+
+	return entry;
+}
+
+// ----- buying
+
+public func GetBuyMenuEntries(object clonk)
+{	
 	// We need to know when exactly we should refresh the menu to prevent unecessary refreshs.
 	var lowest_greyed_out_price = nil;
 
@@ -225,17 +283,8 @@ public func GetBuyMenuEntries(object clonk)
 	for (item in GetBuyableItems(material_player))
 	{
 		amount = GetBuyableAmount(material_player, item);
-		var entry = 
-		{
-			Prototype = custom_entry,
-			image = {Prototype = custom_entry.image},
-			price = {Prototype = custom_entry.price}
-		};
-		entry.image.Symbol = item;
-		entry.image.Text = Format("%dx", amount);
 		var value = GetBuyValue(item);
-		entry.price.Text = Format("<c ffff00>%d{{Icon_Wealth}}</c>", value);
-		entry.Priority = 1000 * value + i; // Order by value and then by BaseMaterial index.
+		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
 		if (value > wealth) // If the player can't afford it, the item (except for the price) is overlayed by a greyish color.
 		{
 			entry.overlay = {Priority = 2, BackgroundColor = RGBa(50, 50, 50, 150)};
@@ -295,6 +344,38 @@ public func OnBuyMenuSelection(id def, extra_data, object clonk)
 		}
 	UpdateInteractionMenus(this.GetBuyMenuEntries);
 }
+
+
+// ----- Selling
+
+public func GetSellMenuEntries(object clonk)
+{	
+	var menu_entries = [];
+	var i = 0, item, amount;
+	
+	for (item in GetSellableItems(clonk))
+	{
+		amount = GetSellableAmount(clonk, item);
+		var value = GetSellValue(item);
+		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
+		PushBack(menu_entries, {symbol = item, extra_data = nil, custom = entry});
+	}
+	
+	PushBack(menu_entries, {symbol = nil, extra_data = nil, custom = entry});
+
+	return menu_entries;
+}
+
+public func OnSellMenuSelection(object item, extra_data, object clonk)
+{
+	// distinguish owners here. at the moment they are the same, but this may change
+	var wealth_player = clonk->GetController();
+	// Buy
+	DoSell(item, wealth_player);
+	UpdateInteractionMenus(this.GetSellMenuEntries);
+}
+
+// ----- Menu updates, misc
 
 private func FxUpdateWealthDisplayTimer(object target, effect fx, int time)
 {

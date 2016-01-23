@@ -1,2 +1,3 @@
 MsgBuy=Buy Stuff
+MsgSell=Sell Stuff
 YourWealth=Your wealth
