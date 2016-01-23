@@ -3,21 +3,181 @@
 	Basic library for structures, handles:
 	* Selling objects in interaction menu
 	
-	@author TODO
+	@author Randrian, Marky (buy and sell logic), TODO (menu)
 */
 
-/*-- Interaction --*/
+local lib_vendor = {}; // proplist that avoids clashes in variables
+
+
+// ----------------- Settings for the trading of objects ----------------
+// --- these functions can be overloaded for vendors or special bases ---
+
+// ----- Buying
+
+func GetBuyValue(id def)
+{
+	// By default call the engine function
+	return def->GetValue();
+}
+
+func GetBuyableItems(int iPlr)
+{
+	// By default get the base material
+	var i, item;
+	var items = [];
+	while (item = GetBaseMaterial(GetOwner(), nil, i++))
+	{
+		PushBack(items, item);
+	}
+	return items;
+}
+
+func GetBuyableAmount(int iPayPlr, id idDef)
+{
+	// by default use the base material
+	return GetBaseMaterial(iPayPlr, idDef);
+}
+
+func ChangeBuyableAmount(int iPayPlr, id idDef, int amount)
+{
+	// by default use base engine function
+	DoBaseMaterial(iPayPlr, idDef, amount);
+}
+
+// ----- Selling
+
+// returns the value of the object if sold in this base
+func GetSellValue(object pObj)
+{
+	// By default call the engine function
+	return pObj->GetValue();
+}
+
+
+// -------------------------- Internal functions --------------------------
+// --- these functions should not be overloaded,
+// --- but offer more interfaces if necessary
+
+// ------------------------ Buying -------------------------------------
+
+
+func DoBuy(id idDef, int iForPlr, int iPayPlr, object pClonk, bool bRight, bool fShowErrors)
+{
+	// Tries to buy an object or all available objects for bRight == true
+	// Returns the last bought object
+	var num_available = GetBuyableAmount(iPayPlr, idDef);
+	if(!num_available) return; //TODO
+	var num_buy = 1, pObj = nil;
+	if (bRight) num_buy = num_available;
+	while (num_buy--)
+	{
+		var iValue = GetBuyValue(idDef);
+		// Does the player have enough money?
+		if(iValue > GetWealth(iPayPlr))
+		{
+			// TODO: get an errorsound
+			if(fShowErrors)
+			{
+				Sound("Error", 0, 100, iForPlr+1);
+				PlayerMessage(iForPlr, "$TxtNotEnoughtMoney$");
+			}
+			break;
+		}
+		// Take the cash
+		DoWealth(iPayPlr, -iValue);
+		Sound("UnCash", 0, 100, iForPlr+1); // TODO: get sound
+		// Decrease the Basematerial
+		ChangeBuyableAmount(iPayPlr, idDef, -1);
+		// Deliver the object
+		var pObj = CreateContents(idDef);
+		pObj->SetOwner(iForPlr);
+		if(pObj->GetOCF() & OCF_CrewMember) pObj->MakeCrewMember(iForPlr);
+		if(pObj->GetOCF() & OCF_Collectible) pClonk->Collect(pObj);
+	}
+	return pObj;
+}
+
+// -------------------------- Selling -------------------------------------
+
+func DoSell(object obj, int wealth_player)
+{
+	if (obj->~QueryOnSell(wealth_player)) return;
+
+	// Sell contents first
+	for(var contents in FindObjects(Find_Container(obj)))
+	{
+		DoSell(contents, wealth_player);
+	}
+
+	// Give the player the cash
+	DoWealth(wealth_player, GetSellValue(obj));
+	Sound("UI::Cash", nil, nil, wealth_player + 1);
+
+	// OnSale callback to object e.g. for goal updates
+	obj->~OnSale(wealth_player, this);
+
+	// Remove object, but eject contents
+	// ejecting contents may be important, because those contents
+	// that return true in QueryOnSell are still in the object
+	// and they should not be removed (why else would they have QueryOnSell)?
+	if (obj) obj->RemoveObject(true);
+	return true;
+}
+
+func GetSellableContents()
+{
+	return FindObjects(Find_Container(this), Find_Or(Find_Category(C4D_Object), Find_Category(C4D_Vehicle), Find_Category(65536/*C4D_TradeLiving*/)));
+}
+
+
+func CanStack(object pFirst, object pSecond)
+{
+	// Test if these Objects differ from each other
+	if(!pFirst->CanConcatPictureWith(pSecond)) return false;
+	if(GetSellValue(pFirst) != GetSellValue(pSecond)) return false;
+	
+	// ok they can be stacked
+	return true;
+}
+
+// -------------------------- Vendor functionality -------------------------------------
+
+func IsVendor()
+{
+	return lib_vendor.is_vendor;
+}
+
+// Makes this building a vendor or removes the base functionallity
+public func MakeVendor(bool should_be_vendor)
+{
+	if (should_be_vendor)
+	{
+		if (!lib_vendor.is_vendor)
+			lib_vendor.is_vendor = AddEffect("IntVendor", this, 1, 10, this);
+	}
+	else
+	{
+		if (lib_vendor.is_vendor)
+			RemoveEffect(nil, nil, lib_vendor.vendor);
+
+		lib_vendor.is_vendor = nil;
+	}
+}
+
+func FxIntVendorTimer(object target, proplist effect, int time)
+{
+	// Search all objects for objects that want to be sold automatically
+	for (var item in FindObjects(Find_Container(this), Find_Func("AutoSell")))
+		Sell(item->GetOwner(), item, this);
+}
+
+// -------------------------- Menus -------------------------------------
 
 // Provides an interaction menu for buying things.
 public func HasInteractionMenu() { return true; }
 
 // Interface for custom buy conditions
-public func AllowBuyMenuEntries(){ return !ObjectCount(Find_ID(Rule_BuyAtFlagpole));}
-
-//public func RejectInteractionMenu(object clonk)
-//{
-//	return _inherited(clonk, ...);
-//}
+public func AllowBuyMenuEntries(){ return ObjectCount(Find_ID(Rule_BuyAtFlagpole));}
 
 public func GetInteractionMenus(object clonk)
 {
@@ -53,13 +213,18 @@ public func GetBuyMenuEntries(object clonk)
 	
 	// We need to know when exactly we should refresh the menu to prevent unecessary refreshs.
 	var lowest_greyed_out_price = nil;
-	var wealth_player = GetOwner(); // Note that the flag owner pays for everything atm.
+
+	// distinguish owners here. at the moment they are the same, but this may change
+	var wealth_player = GetOwner();
+	var material_player = GetOwner();
+
 	var wealth = GetWealth(wealth_player); 
 	var menu_entries = [];
 	var i = 0, item, amount;
-	while (item = GetBaseMaterial(GetOwner(), nil, i++))
+	
+	for (item in GetBuyableItems(material_player))
 	{
-		amount = GetBaseMaterial(GetOwner(), item);
+		amount = GetBuyableAmount(material_player, item);
 		var entry = 
 		{
 			Prototype = custom_entry,
@@ -102,14 +267,17 @@ public func GetBuyMenuEntries(object clonk)
 	fx.last_wealth = wealth;
 	fx.plr = wealth_player;
 	PushBack(menu_entries, {symbol = nil, extra_data = nil, custom = entry, fx = fx});
-	
+
 	return menu_entries;
 }
 
 public func OnBuyMenuSelection(id def, extra_data, object clonk)
 {
+	// distinguish owners here. at the moment they are the same, but this may change
+	var wealth_player = GetOwner();
+	var material_player = clonk->GetController();
 	// Buy
-	DoBuy(def, clonk->GetController(), GetOwner(), clonk);
+	DoBuy(def, material_player, wealth_player, clonk);
 	// Excess objects exit flag (can't get them out...)
 	var i = ContentsCount();
 	var obj;
