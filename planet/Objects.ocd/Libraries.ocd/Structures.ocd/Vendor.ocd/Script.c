@@ -14,6 +14,9 @@ local lib_vendor = {}; // proplist that avoids clashes in variables
 
 // ----- Buying
 
+public func AllowBuyMenuEntries(){ return true;}
+
+
 func GetBuyValue(id item)
 {
 	// By default call the engine function
@@ -45,6 +48,8 @@ func ChangeBuyableAmount(int for_player, id item, int amount)
 }
 
 // ----- Selling
+
+public func AllowSellMenuEntries(){ return true;}
 
 func GetSellableItems(object container)
 {
@@ -201,13 +206,6 @@ func FxIntVendorTimer(object target, proplist effect, int time)
 
 // Provides an interaction menu for buying things.
 public func HasInteractionMenu() { return true; }
-
-// Interface for custom buy conditions
-public func AllowBuyMenuEntries(){ return ObjectCount(Find_ID(Rule_BuyAtFlagpole));}
-
-// Interface for custom sell conditions
-public func AllowSellMenuEntries(){ return AllowBuyMenuEntries(); }
-
 
 public func GetInteractionMenus(object clonk)
 {

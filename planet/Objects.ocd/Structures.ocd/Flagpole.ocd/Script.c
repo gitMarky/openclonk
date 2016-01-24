@@ -40,6 +40,12 @@ public func NoConstructionFlip() { return true; }
 // The flag can take valuables which are then auto-sold.
 public func IsContainer() { return true; }
 
+// Allow buying only if the rule is active
+public func AllowBuyMenuEntries(){ return ObjectCount(Find_ID(Rule_BuyAtFlagpole));}
+
+// The flag can take valuables which are then auto-sold.
+public func AllowSellMenuEntries(){ return false;}
+
 public func RejectCollect(id def, object obj)
 {
 	if (obj->~IsValuable())
