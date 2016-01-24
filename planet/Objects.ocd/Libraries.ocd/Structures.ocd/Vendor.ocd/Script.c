@@ -403,7 +403,7 @@ func BuyItem_Entrance()
 	// after first collection, fade out rule should be effective again
 	var overloaded_fn = this.BuyOverload_Entrance;
 	this.HasNoFadeOut = nil;
-	this.BuyOverload_Entranc = nil;
+	this.BuyOverload_Entrance = nil;
 	this.Entrance = overloaded_fn;
 	if (overloaded_fn) return Call(overloaded_fn, ...);
 }
