@@ -107,7 +107,7 @@ func DoBuy(id item, int for_player, int wealth_player, object buyer, bool buy_al
 			if(show_errors)
 			{
 				Sound("UI::Error", nil, nil, for_player + 1);
-				PlayerMessage(for_player, "$TxtNotEnoughMoney$");
+				PlayerMessage(for_player, "$MsgNotEnoughWealth$");
 			}
 			break;
 		}
