@@ -94,13 +94,13 @@ func DoBuy(id idDef, int iForPlr, int iPayPlr, object pClonk, bool bRight, bool 
 {
 	// Tries to buy an object or all available objects for bRight == true
 	// Returns the last bought object
-	var num_available = GetBuyableAmount(iPayPlr, idDef);
+	var num_available = this->GetBuyableAmount(iPayPlr, idDef);
 	if(!num_available) return; //TODO
 	var num_buy = 1, pObj = nil;
 	if (bRight) num_buy = num_available;
 	while (num_buy--)
 	{
-		var iValue = GetBuyValue(idDef);
+		var iValue = this->GetBuyValue(idDef);
 		// Does the player have enough money?
 		if(iValue > GetWealth(iPayPlr))
 		{
@@ -115,8 +115,8 @@ func DoBuy(id idDef, int iForPlr, int iPayPlr, object pClonk, bool bRight, bool 
 		// Take the cash
 		DoWealth(iPayPlr, -iValue);
 		Sound("UnCash", 0, 100, iForPlr+1); // TODO: get sound
-		// Decrease the Basematerial
-		ChangeBuyableAmount(iPayPlr, idDef, -1);
+		// Decrease the base material, allow runtime overload
+		this->ChangeBuyableAmount(iPayPlr, idDef, -1);
 		// Deliver the object
 		var pObj = CreateContents(idDef);
 		pObj->SetOwner(iForPlr);
@@ -139,7 +139,7 @@ func DoSell(object obj, int wealth_player)
 	}
 
 	// Give the player the cash
-	DoWealth(wealth_player, GetSellValue(obj));
+	DoWealth(wealth_player, this->GetSellValue(obj));
 	Sound("UI::Cash", nil, nil, wealth_player + 1);
 
 	// OnSale callback to object e.g. for goal updates
@@ -163,7 +163,7 @@ func CanStack(object pFirst, object pSecond)
 {
 	// Test if these Objects differ from each other
 	if(!pFirst->CanConcatPictureWith(pSecond)) return false;
-	if(GetSellValue(pFirst) != GetSellValue(pSecond)) return false;
+	if(this->GetSellValue(pFirst) != this->GetSellValue(pSecond)) return false;
 	
 	// ok they can be stacked
 	return true;
@@ -280,10 +280,10 @@ public func GetBuyMenuEntries(object clonk)
 	var menu_entries = [];
 	var i = 0, item, amount;
 	
-	for (item in GetBuyableItems(material_player))
+	for (item in this->GetBuyableItems(material_player))
 	{
-		amount = GetBuyableAmount(material_player, item);
-		var value = GetBuyValue(item);
+		amount = this->GetBuyableAmount(material_player, item);
+		var value = this->GetBuyValue(item);
 		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
 		if (value > wealth) // If the player can't afford it, the item (except for the price) is overlayed by a greyish color.
 		{
@@ -353,10 +353,10 @@ public func GetSellMenuEntries(object clonk)
 	var menu_entries = [];
 	var i = 0, item, amount;
 	
-	for (item in GetSellableItems(clonk))
+	for (item in this->GetSellableItems(clonk))
 	{
-		amount = GetSellableAmount(clonk, item);
-		var value = GetSellValue(item);
+		amount = this->GetSellableAmount(clonk, item);
+		var value = this->GetSellValue(item);
 		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
 		PushBack(menu_entries, {symbol = item, extra_data = nil, custom = entry});
 	}
