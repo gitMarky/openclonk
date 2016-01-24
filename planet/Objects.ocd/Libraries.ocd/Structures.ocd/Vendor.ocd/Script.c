@@ -14,34 +14,34 @@ local lib_vendor = {}; // proplist that avoids clashes in variables
 
 // ----- Buying
 
-func GetBuyValue(id def)
+func GetBuyValue(id item)
 {
 	// By default call the engine function
-	return def->GetValue();
+	return item->GetValue();
 }
 
-func GetBuyableItems(int iPlr)
+func GetBuyableItems(int for_player)
 {
 	// By default get the base material
 	var i, item;
 	var items = [];
-	while (item = GetBaseMaterial(GetOwner(), nil, i++))
+	while (item = GetBaseMaterial(for_player, nil, i++))
 	{
 		PushBack(items, item);
 	}
 	return items;
 }
 
-func GetBuyableAmount(int iPayPlr, id idDef)
+func GetBuyableAmount(int for_player, id item)
 {
 	// by default use the base material
-	return GetBaseMaterial(iPayPlr, idDef);
+	return GetBaseMaterial(for_player, item);
 }
 
-func ChangeBuyableAmount(int iPayPlr, id idDef, int amount)
+func ChangeBuyableAmount(int for_player, id item, int amount)
 {
 	// by default use base engine function
-	DoBaseMaterial(iPayPlr, idDef, amount);
+	DoBaseMaterial(for_player, item, amount);
 }
 
 // ----- Selling
@@ -52,16 +52,16 @@ func GetSellableItems(object container)
 	return items;
 }
 
-func GetSellableAmount(int iPayPlr, id idDef)
+func GetSellableAmount(object container, id item)
 {
 	return 0; // TODO
 }
 
 // returns the value of the object if sold in this base
-func GetSellValue(object pObj)
+func GetSellValue(object item)
 {
 	// By default call the engine function
-	return pObj->GetValue();
+	return item->GetValue();
 }
 
 // ----- Menu entries
@@ -90,40 +90,40 @@ func Definition(id def)
 // ------------------------ Buying -------------------------------------
 
 
-func DoBuy(id idDef, int iForPlr, int iPayPlr, object pClonk, bool bRight, bool fShowErrors)
+func DoBuy(id item, int for_player, int wealth_player, object buyer, bool buy_all_available, bool show_errors)
 {
 	// Tries to buy an object or all available objects for bRight == true
 	// Returns the last bought object
-	var num_available = this->GetBuyableAmount(iPayPlr, idDef);
+	var num_available = this->GetBuyableAmount(wealth_player, item);
 	if(!num_available) return; //TODO
-	var num_buy = 1, pObj = nil;
-	if (bRight) num_buy = num_available;
+	var num_buy = 1, purchased = nil;
+	if (buy_all_available) num_buy = num_available;
 	while (num_buy--)
 	{
-		var iValue = this->GetBuyValue(idDef);
+		var price = this->GetBuyValue(item);
 		// Does the player have enough money?
-		if(iValue > GetWealth(iPayPlr))
+		if(price > GetWealth(wealth_player))
 		{
 			// TODO: get an errorsound
-			if(fShowErrors)
+			if(show_errors)
 			{
-				Sound("Error", 0, 100, iForPlr+1);
-				PlayerMessage(iForPlr, "$TxtNotEnoughtMoney$");
+				Sound("Error", 0, 100, for_player + 1);
+				PlayerMessage(for_player, "$TxtNotEnoughMoney$");
 			}
 			break;
 		}
 		// Take the cash
-		DoWealth(iPayPlr, -iValue);
-		Sound("UnCash", 0, 100, iForPlr+1); // TODO: get sound
+		DoWealth(wealth_player, -price);
+		Sound("UnCash", 0, 100, for_player + 1); // TODO: get sound
 		// Decrease the base material, allow runtime overload
-		this->ChangeBuyableAmount(iPayPlr, idDef, -1);
+		this->ChangeBuyableAmount(wealth_player, item, -1);
 		// Deliver the object
-		var pObj = CreateContents(idDef);
-		pObj->SetOwner(iForPlr);
-		if(pObj->GetOCF() & OCF_CrewMember) pObj->MakeCrewMember(iForPlr);
-		if(pObj->GetOCF() & OCF_Collectible) pClonk->Collect(pObj);
+		purchased = CreateContents(item);
+		purchased->SetOwner(for_player);
+		if (purchased->GetOCF() & OCF_CrewMember) purchased->MakeCrewMember(for_player);
+		if (purchased->GetOCF() & OCF_Collectible) buyer->Collect(purchased);
 	}
-	return pObj;
+	return purchased;
 }
 
 // -------------------------- Selling -------------------------------------
@@ -159,14 +159,10 @@ func GetSellableContents()
 }
 
 
-func CanStack(object pFirst, object pSecond)
+func CanStack(object first, object second)
 {
-	// Test if these Objects differ from each other
-	if(!pFirst->CanConcatPictureWith(pSecond)) return false;
-	if(this->GetSellValue(pFirst) != this->GetSellValue(pSecond)) return false;
-	
-	// ok they can be stacked
-	return true;
+	return first->CanConcatPictureWith(second) // need the same picture
+	   && (this->GetSellValue(first) == this->GetSellValue(second)); // and the same value
 }
 
 // -------------------------- Vendor functionality -------------------------------------
@@ -274,15 +270,15 @@ public func GetBuyMenuEntries(object clonk)
 
 	// distinguish owners here. at the moment they are the same, but this may change
 	var wealth_player = GetOwner();
-	var material_player = GetOwner();
+	var for_player = GetOwner();
 
 	var wealth = GetWealth(wealth_player); 
 	var menu_entries = [];
 	var i = 0, item, amount;
 	
-	for (item in this->GetBuyableItems(material_player))
+	for (item in this->GetBuyableItems(for_player))
 	{
-		amount = this->GetBuyableAmount(material_player, item);
+		amount = this->GetBuyableAmount(for_player, item);
 		var value = this->GetBuyValue(item);
 		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
 		if (value > wealth) // If the player can't afford it, the item (except for the price) is overlayed by a greyish color.
@@ -324,9 +320,9 @@ public func OnBuyMenuSelection(id def, extra_data, object clonk)
 {
 	// distinguish owners here. at the moment they are the same, but this may change
 	var wealth_player = GetOwner();
-	var material_player = clonk->GetController();
+	var for_player = clonk->GetController();
 	// Buy
-	DoBuy(def, material_player, wealth_player, clonk);
+	DoBuy(def, for_player, wealth_player, clonk);
 	// Excess objects exit flag (can't get them out...)
 	var i = ContentsCount();
 	var obj;
