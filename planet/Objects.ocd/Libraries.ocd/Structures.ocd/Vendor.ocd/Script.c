@@ -257,7 +257,7 @@ public func GetInteractionMenus(object clonk)
 {
 	var menus = _inherited() ?? [];
 	// only open the menus if ready
-	if (AllowBuyMenuEntries())
+	if (this->AllowBuyMenuEntries())
 	{
 		var buy_menu =
 		{
@@ -271,7 +271,7 @@ public func GetInteractionMenus(object clonk)
 		PushBack(menus, buy_menu);
 	}
 	
-	if (AllowSellMenuEntries())
+	if (this->AllowSellMenuEntries())
 	{
 		var sell_menu =
 		{
