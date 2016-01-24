@@ -104,17 +104,16 @@ func DoBuy(id item, int for_player, int wealth_player, object buyer, bool buy_al
 		// Does the player have enough money?
 		if(price > GetWealth(wealth_player))
 		{
-			// TODO: get an errorsound
 			if(show_errors)
 			{
-				Sound("Error", 0, 100, for_player + 1);
+				Sound("UI::Error", nil, nil, for_player + 1);
 				PlayerMessage(for_player, "$TxtNotEnoughMoney$");
 			}
 			break;
 		}
 		// Take the cash
 		DoWealth(wealth_player, -price);
-		Sound("UnCash", 0, 100, for_player + 1); // TODO: get sound
+		Sound("UI::UnCash", nil, nil, for_player + 1); // TODO: get sound
 		// Decrease the base material, allow runtime overload
 		this->ChangeBuyableAmount(wealth_player, item, -1);
 		// Deliver the object
