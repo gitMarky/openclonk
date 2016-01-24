@@ -49,99 +49,11 @@ func ChangeBuyableAmount(int for_player, id item, int amount)
 
 // ----- Selling
 
-public func AllowSellMenuEntries(){ return true;}
-
-func GetSellableContents(int wealth_player)
-{
-	var inventory = [];
-	var obj, i = 0;
-	while (obj = Contents(i++))
-	{
-		if (obj->~QueryOnSell(wealth_player)) continue;
-		
-		var sellable = obj->~GetCategory() & C4D_Object
-		            || obj->~GetCategory() & C4D_Vehicle
-		            || obj->~GetCategory() & 65536/*C4D_TradeLiving*/;
-
-		if (!sellable) continue;
-
-		// check if already exists (and then stack!)
-		var found = false;
-
-		// Never stack containers with (different) contents, though.
-//		var is_container = obj->~IsContainer();
-
-		// How many objects are this object?!
-		var object_amount = obj->~GetStackCount() ?? 1;
-
-		// Infinite stacks work differently - showing an arbitrary amount would not make sense.
-		if (object_amount > 1 && obj->~IsInfiniteStackCount())
-			object_amount = 1;
-
-		// Empty containers can be stacked.
-		for (var inv in inventory)
-		{
-			if (!inv.objects[0]->CanBeStackedWith(obj)) continue;
-			if (!obj->CanBeStackedWith(inv.objects[0])) continue;
-			if (!CanStackSellableContents(inv.objects[0], obj)) continue;
-			inv.count += object_amount;
-			PushBack(inv.objects, obj);
-			
-			// This object has a custom symbol (because it's a container)? Then the normal text would not be displayed.
-			if (inv.custom != nil)
-			{
-				inv.custom.top.Text = inv.text;
-				inv.custom.top.Style = inv.custom.top.Style | GUI_TextRight | GUI_TextBottom;
-			}
-			
-			found = true;
-			break;
-		}
-
-		// Add new!
-		if (!found)
-		{
-			PushBack(inventory,
-			{
-					objects = [obj],
-					count = object_amount,
-			});
-		}
-	}
-
-	return inventory;
-}
-
-func CanStackSellableContents(object first, object second)
-{
-	return first->CanConcatPictureWith(second) // need the same picture
-	   && (this->GetSellValue(first) == this->GetSellValue(second)); // and the same value
-}
-
-
 // returns the value of the object if sold in this base
 func GetSellValue(object item)
 {
 	// By default call the engine function
 	return item->GetValue();
-}
-
-// ----- Menu entries
-
-func Definition(id def)
-{
-	_inherited(...);
-	
-	// default design of a control menu item
-	if (def.lib_vendor == nil) def.lib_vendor = {};
-	def.lib_vendor.custom_entry = 
-	{
-		Right = "4em", Bottom = "2em",
-		BackgroundColor = {Std = 0, OnHover = 0x50ff0000},
-		image = {Right = "2em", Style = GUI_TextBottom | GUI_TextRight},
-		price = {Left = "2em", Priority = 3}
-	};
-	
 }
 
 
@@ -271,39 +183,17 @@ public func GetInteractionMenus(object clonk)
 		PushBack(menus, buy_menu);
 	}
 	
-	if (this->AllowSellMenuEntries())
-	{
-		var sell_menu =
-		{
-			title = "$MsgSell$",
-			entries_callback = this.GetSellMenuEntries,
-			callback = "OnSellMenuSelection",
-			callback_target = this,
-			BackgroundColor = RGB(50, 50, 0),
-			Priority = 20
-		};
-		PushBack(menus, sell_menu);
-	}
-	
 	return menus;
 }
 
-func GetBuyOrSellMenuEntry(int index, item, int amount, int value)
+func GetBuyMenuEntry(int index, id item, int amount, int value)
 {
-	var custom_entry = 
+	var entry = 
 	{
 		Right = "4em", Bottom = "2em",
 		BackgroundColor = {Std = 0, OnHover = 0x50ff0000},
 		image = {Right = "2em", Style = GUI_TextBottom | GUI_TextRight},
 		price = {Left = "2em", Priority = 3}
-	};
-	
-
-	var entry = 
-	{
-		Prototype = custom_entry,
-		image = {Prototype = custom_entry.image},
-		price = {Prototype = custom_entry.price}
 	};
 	entry.image.Symbol = item;
 	entry.image.Text = Format("%dx", amount);
@@ -332,7 +222,7 @@ public func GetBuyMenuEntries(object clonk)
 	{
 		amount = this->GetBuyableAmount(for_player, item);
 		var value = this->GetBuyValue(item);
-		var entry = GetBuyOrSellMenuEntry(i, item, amount, value);
+		var entry = GetBuyMenuEntry(i, item, amount, value);
 		if (value > wealth) // If the player can't afford it, the item (except for the price) is overlayed by a greyish color.
 		{
 			entry.overlay = {Priority = 2, BackgroundColor = RGBa(50, 50, 50, 150)};
@@ -391,38 +281,6 @@ public func OnBuyMenuSelection(id def, extra_data, object clonk)
 			}
 		}
 	UpdateInteractionMenus(this.GetBuyMenuEntries);
-}
-
-
-// ----- Selling
-
-public func GetSellMenuEntries(object clonk)
-{	
-	// distinguish owners here
-	var wealth_player = clonk->GetController();
-
-	var menu_entries = [];
-	var i = 0, item, amount;
-	
-	for (item in this->GetSellableContents(wealth_player))
-	{
-		var instance = item.objects[0];
-		amount = GetLength(item.objects);
-		var value = this->GetSellValue(instance);
-		var entry = GetBuyOrSellMenuEntry(i, instance, amount, value);
-		PushBack(menu_entries, {symbol = instance, extra_data = nil, custom = entry});
-	}
-
-	return menu_entries;
-}
-
-public func OnSellMenuSelection(object item, extra_data, object clonk)
-{
-	// distinguish owners here
-	var wealth_player = clonk->GetController();
-	// Buy
-	DoSell(item, wealth_player);
-	UpdateInteractionMenus(this.GetSellMenuEntries);
 }
 
 // ----- Menu updates, misc
