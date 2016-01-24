@@ -3,7 +3,7 @@
 	Basic library for structures, handles:
 	* Selling objects in interaction menu
 	
-	@author Randrian, Marky (buy and sell logic), TODO (menu)
+	@author Randrian, Marky (buy and sell logic), Maikel (menu)
 */
 
 local lib_vendor = {}; // proplist that avoids clashes in variables
