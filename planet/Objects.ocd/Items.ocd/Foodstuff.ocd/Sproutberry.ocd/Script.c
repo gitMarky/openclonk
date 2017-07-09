@@ -33,16 +33,6 @@ func SaveScenarioObject(props, ...)
 	return inherited(props, ...);
 }
 
-/*-- Eating --*/
-
-public func ControlUse(object clonk, int iX, int iY)
-{
-	Feed(clonk);
-	return true;
-}
-
-public func NutritionalValue() { return 5; }
-
 /*-- Sprouting --*/
 
 func FxSproutCheckTimer(target, effect, time)

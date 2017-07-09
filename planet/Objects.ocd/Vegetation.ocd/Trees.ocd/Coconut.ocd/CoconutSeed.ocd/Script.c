@@ -1,6 +1,7 @@
 /*--- Coconut ---*/
 
 #include Library_Seed
+#include Library_FoodItem
 
 local lib_seed_plant = Tree_Coconut;
 local lib_seed_lifetime = 10000;
@@ -69,18 +70,6 @@ public func FxIntGerminateTimer(object coconut, proplist effect, int timer)
 		coconut->RemoveObject();
 	return;
 }
-
-
-/*-- Eating --*/
-
-protected func ControlUse(object clonk, int iX, int iY)
-{
-	Feed(clonk);
-	return true;
-}
-
-public func NutritionalValue() { return 5; }
-
 
 /*-- Bounce --*/
 

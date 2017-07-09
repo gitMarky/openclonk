@@ -19,12 +19,6 @@ func Hit()
 
 /*-- Eating --*/
 
-public func ControlUse(object clonk)
-{
-	Feed(clonk);
-	return true;
-}
-
 public func NutritionalValue() { return 25; }
 
 /*-- Production --*/

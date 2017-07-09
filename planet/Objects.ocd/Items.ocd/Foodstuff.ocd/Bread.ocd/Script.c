@@ -9,12 +9,6 @@ protected func Hit()
 
 /* Eating */
 
-protected func ControlUse(object clonk, int iX, int iY)
-{
-	Feed(clonk);
-	return true;
-}
-
 public func NutritionalValue() { return 50; }
 public func IsKitchenProduct() { return true; }
 public func GetFuelNeed() { return 50; }
