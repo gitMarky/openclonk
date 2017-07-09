@@ -29,7 +29,7 @@ public func ControlUse(object clonk, int x, int y)
 // Call this when you want a user to eat the object.
 public func Feed(object clonk)
 {
-	if (this->CanFeed(clonk))
+	if (this->CanFeed(clonk) && this->NutritionalValue() > 0)
 	{
 		clonk->Eat(this);
 	}
