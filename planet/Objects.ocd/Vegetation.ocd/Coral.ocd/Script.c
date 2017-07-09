@@ -44,7 +44,6 @@ func StartFloating()
 	RemoveTimer("Seed");
 	SetAction("Idle");
 	this.Collectible = 1;
-	this.NutritionalValue = this.NutritionalValue_;
 	
 	for (var attachment in mesh_attachments)
 		DetachMesh(attachment);
@@ -177,4 +176,4 @@ func IsPlant(){return true;}
 
 /* Eating */
 
-func NutritionalValue_() { return 5; }
+func NutritionalValue() { if (this.Collectible) return 5; else return 0; }
