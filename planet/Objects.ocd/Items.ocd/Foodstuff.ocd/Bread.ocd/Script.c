@@ -1,6 +1,6 @@
 /*-- Bread --*/
 
-#include Library_FoodItem
+#include Library_Edible
 
 protected func Hit()
 {

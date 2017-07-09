@@ -3,7 +3,7 @@
 	Yummier meal than an uncooked mushroom.
 */
 
-#include Library_FoodItem
+#include Library_Edible
 
 /*-- Engine Callbacks --*/
 

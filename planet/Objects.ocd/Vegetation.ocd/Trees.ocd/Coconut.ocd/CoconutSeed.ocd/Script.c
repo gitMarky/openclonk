@@ -1,7 +1,7 @@
 /*--- Coconut ---*/
 
 #include Library_Seed
-#include Library_FoodItem
+#include Library_Edible
 
 local lib_seed_plant = Tree_Coconut;
 local lib_seed_lifetime = 10000;

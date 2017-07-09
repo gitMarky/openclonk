@@ -3,7 +3,7 @@
 	Fresh from nature's garden.
 */
 
-#include Library_FoodItem
+#include Library_Edible
 
 /*-- Engine Callbacks --*/
 

@@ -1,6 +1,6 @@
 /*-- Coral --*/
 
-#include Library_FoodItem
+#include Library_Edible
 
 local Name = "$Name$";
 local Description = "$Description$";

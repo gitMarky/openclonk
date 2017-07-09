@@ -6,7 +6,7 @@
 */
 
 #include Library_Plant
-#include Library_FoodItem
+#include Library_Edible
 
 local plant_seed_chance = 17;
 local plant_seed_area = 150;

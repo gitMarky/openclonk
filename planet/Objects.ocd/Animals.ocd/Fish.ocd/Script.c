@@ -3,7 +3,7 @@
 	Author: Zapper
 */
 
-#include Library_FoodItem
+#include Library_Edible
 
 local SwimMaxAngle = 15;
 local SwimMaxSpeed = 30;

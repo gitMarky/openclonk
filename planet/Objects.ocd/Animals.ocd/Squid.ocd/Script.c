@@ -7,7 +7,7 @@
 */
 
 #include Library_ForceField
-#include Library_FoodItem
+#include Library_Edible
 
 
 static const SQUID_SWIM_MAX_SPEED = 30;

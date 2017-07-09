@@ -1,5 +1,5 @@
 /**
-	Library_FoodItem
+	Library_Edible
 
 	Contains the logic for an object that can be eaten.
 
@@ -25,17 +25,16 @@ public func ControlUse(object clonk, int x, int y)
 }
 
 
-
 // Call this when you want a user to eat the object.
 public func Feed(object clonk)
 {
-	if (this->CanFeed(clonk) && this->NutritionalValue() > 0)
+	if (this->CanFeed(clonk))
 	{
 		clonk->Eat(this);
 	}
 	else
 	{
-		 clonk->~PlaySoundDoubt();
+		clonk->~PlaySoundDoubt();
 	}
 }
 
@@ -43,7 +42,7 @@ public func Feed(object clonk)
 // Decides whether a user can eat this object. 
 public func CanFeed(object clonk)
 {
-	return !(clonk->HasMaxEnergy()); /// Only if the user is not at full energy
+	return !(clonk->HasMaxEnergy()) && this->NutritionalValue() != nil; /// Only if the user is not at full energy and the item gives back energy
 }
 
 
