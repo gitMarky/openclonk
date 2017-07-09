@@ -1,5 +1,6 @@
 /*-- Coral --*/
 
+#include Library_FoodItem
 
 local Name = "$Name$";
 local Description = "$Description$";
@@ -178,7 +179,7 @@ func IsPlant(){return true;}
 
 protected func ControlUse(object clonk, int iX, int iY)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

@@ -7,6 +7,7 @@
 */
 
 #include Library_ForceField
+#include Library_FoodItem
 
 
 static const SQUID_SWIM_MAX_SPEED = 30;
@@ -159,7 +160,7 @@ public func CatchBlow()
 
 public func ControlUse(object clonk, int iX, int iY)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

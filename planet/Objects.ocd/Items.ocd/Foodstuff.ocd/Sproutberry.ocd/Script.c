@@ -3,6 +3,8 @@
 	Fresh from nature's garden.
 */
 
+#include Library_FoodItem
+
 /*-- Engine Callbacks --*/
 
 public func Construction()
@@ -35,7 +37,7 @@ func SaveScenarioObject(props, ...)
 
 public func ControlUse(object clonk, int iX, int iY)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

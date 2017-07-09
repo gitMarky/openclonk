@@ -3,6 +3,8 @@
 	Yummier meal than an uncooked mushroom.
 */
 
+#include Library_FoodItem
+
 /*-- Engine Callbacks --*/
 
 func Construction()
@@ -19,7 +21,7 @@ func Hit()
 
 public func ControlUse(object clonk)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

@@ -6,6 +6,7 @@
 */
 
 #include Library_Plant
+#include Library_FoodItem
 
 local plant_seed_chance = 17;
 local plant_seed_area = 150;
@@ -44,7 +45,7 @@ public func RootSurface()
 
 protected func ControlUse(object clonk)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

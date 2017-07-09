@@ -1,5 +1,7 @@
 /*-- Bread --*/
 
+#include Library_FoodItem
+
 protected func Hit()
 {
 	Sound("Hits::GeneralHit?");
@@ -9,7 +11,7 @@ protected func Hit()
 
 protected func ControlUse(object clonk, int iX, int iY)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 

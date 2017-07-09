@@ -3,6 +3,8 @@
 	Author: Zapper
 */
 
+#include Library_FoodItem
+
 local SwimMaxAngle = 15;
 local SwimMaxSpeed = 30;
 local VisionMaxAngle = 140;
@@ -108,7 +110,7 @@ func Death()
 
 protected func ControlUse(object clonk, int iX, int iY)
 {
-	clonk->Eat(this);
+	Feed(clonk);
 	return true;
 }
 
