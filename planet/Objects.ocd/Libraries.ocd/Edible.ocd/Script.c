@@ -13,15 +13,21 @@
 // When the clonk is able to use the item
 public func RejectUse(object clonk)
 {
-    return !clonk->IsWalking();
+    return _inherited(clonk) || !clonk->IsWalking();
 }
 
 
 // Usage
 public func ControlUse(object clonk, int x, int y)
 {
-	Feed(clonk);
-	return true;
+    if (_inherited(clonk, x, y, ...))
+    {
+    }
+    else
+    {
+	    Feed(clonk);
+        return true;
+	}
 }
 
 
