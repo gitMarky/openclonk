@@ -1,6 +1,8 @@
 /*-- Switch --*/
 
-local target, handle, last_controlling_clonk;
+#include Library_Switch
+
+local handle, last_controlling_clonk;
 
 public func Initialize()
 {
@@ -12,19 +14,12 @@ public func Initialize()
 public func SaveScenarioObject(props)
 {
 	if (!inherited(props, ...)) return false;
-	if (target) props->AddCall("Target", this, "SetTarget", target);
 	if (handle)
 	{
 		var pos = GetHandlePosition();
 		if (pos) props->AddCall("Handle", this, "SetSwitchDir", (pos>0)-(pos<0));
 	}
 	if (left_action || right_action) props->AddCall("Action", this, "SetActions", left_action, right_action);
-	return true;
-}
-
-public func SetTarget(object trg)
-{
-	target = trg;
 	return true;
 }
 
@@ -39,7 +34,7 @@ public func ConnectNearestDoor()
 {
 	// EditCursor helper command: Connect to nearest door. Return connected door.
 	var door = FindObject(Find_ID(StoneDoor), Sort_Distance());
-	if (door) SetTarget(door);
+	if (door) SetSwitchTarget(door);
 	return door;
 }
 
@@ -73,7 +68,7 @@ public func ControlRight(object clonk)
 
 private func ControlSwitchDir(object clonk, int dir)
 {
-	if (!handle || (!target && !right_action && !left_action))
+	if (!handle || (!GetSwitchTarget() && !right_action && !left_action))
 	{
 		Sound("Structures::SwitchStuck");
 		Message("$MsgStuck$");
@@ -128,7 +123,7 @@ public func SetR(int to_r)
 
 private func SwitchingTimer(int dir)
 {
-	if (!handle || (!target && !right_action && !left_action))
+	if (!handle || (!GetSwitchTarget() && !right_action && !left_action))
 	{
 		Sound("Structures::SwitchStuck");
 		return SetAction("Idle");
@@ -154,16 +149,13 @@ private func DoSwitchFlip(object clonk, int dir)
 	if (dir > 0)
 	{
 		// Open/close should be aligned to vertical component of direction
-		if (target)
+		if (GetR() < 0)
 		{
-			if (GetR() < 0)
-			{
-				target->~OpenDoor(this);
-			}
-			else
-			{
-				target->~CloseDoor(this);
-			}
+			DoSwitchOn(clonk);
+		}
+		else
+		{
+			DoSwitchOff(clonk);
 		}
 		// Action last; it may delete the door/clonk/etc.
 		if (right_action)
@@ -172,16 +164,13 @@ private func DoSwitchFlip(object clonk, int dir)
 	else
 	{
 		// Open/close should be aligned to vertical component of direction
-		if (target)
-		{	
-			if (GetR() < 0)
-			{
-				target->~CloseDoor(this);
-			}
-			else
-			{
-				target->~OpenDoor(this);
-			}
+		if (GetR() < 0)
+		{
+			DoSwitchOff(clonk);
+		}
+		else
+		{
+			DoSwitchOn(clonk);
 		}
 		// Action last; it may delete the door/clonk/etc.	
 		if (left_action)
@@ -237,7 +226,6 @@ func Definition(def)
 	SetProperty("PictureTransformation", Trans_Mul(Trans_Scale(800), Trans_Translate(0,0,0),Trans_Rotate(-20,1,0,0),Trans_Rotate(-30,0,1,0)), def);
 	SetProperty("MeshTransformation", Trans_Rotate(-13,0,1,0), def);
 	if (!def.EditorProps) def.EditorProps = {};
-	def.EditorProps.target = { Name = "$Target$", Type = "object", Filter = "IsSwitchTarget" };
 	def.EditorProps.left_action = new UserAction.Prop { Name="$LeftAction$" };
 	def.EditorProps.right_action = new UserAction.Prop { Name="$RightAction$" };
 	return _inherited(def, ...);

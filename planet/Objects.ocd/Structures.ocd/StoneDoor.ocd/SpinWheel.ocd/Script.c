@@ -1,30 +1,26 @@
 /*-- Spin Wheel --*/
 
-local targetdoor, temp_light;
+#include Library_Switch
+
+local temp_light;
 
 public func Initialize()
 {
 	SetAction("Still");
 }
 
-public func SetStoneDoor(object door)
-{
-	targetdoor = door;
-	return true;
-}
-
 public func ControlUp(object clonk)
 {
-	if (GetAction() == "Still" && targetdoor)
+	if (GetAction() == "Still" && GetSwitchTarget())
 	{
 		if (clonk)
 		{
-			SetPlrView(clonk->GetController(), targetdoor);
+			SetPlrView(clonk->GetController(), GetSwitchTarget());
 			if (temp_light) temp_light->RemoveObject();
-			var y_off = targetdoor->~GetFloorOffset();
-			temp_light = Global->CreateLight(targetdoor->GetX(), targetdoor->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
+			var y_off = GetSwitchTarget()->~GetFloorOffset();
+			temp_light = Global->CreateLight(GetSwitchTarget()->GetX(), GetSwitchTarget()->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
 		}
-		targetdoor->OpenDoor();
+		DoSwitchOn(clonk);
 		SetAction("SpinLeft");
 		Sound("Structures::StoneGate::Chain");
 	}
@@ -34,16 +30,16 @@ public func ControlUp(object clonk)
 
 public func ControlDown(object clonk)
 {
-	if (GetAction() == "Still" && targetdoor)
+	if (GetAction() == "Still" && GetSwitchTarget())
 	{
 		if (clonk)
 		{
-			SetPlrView(clonk->GetController(), targetdoor);
+			SetPlrView(clonk->GetController(), GetSwitchTarget());
 			if (temp_light) temp_light->RemoveObject();
-			var y_off = targetdoor->~GetFloorOffset();
-			temp_light = Global->CreateLight(targetdoor->GetX(), targetdoor->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
+			var y_off = GetSwitchTarget()->~GetFloorOffset();
+			temp_light = Global->CreateLight(GetSwitchTarget()->GetX(), GetSwitchTarget()->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
 		}
-		targetdoor->CloseDoor();
+		DoSwitchOff(clonk);
 		SetAction("SpinRight");
 		Sound("Structures::StoneGate::Chain");
 	}
@@ -54,7 +50,6 @@ public func ControlDown(object clonk)
 public func SaveScenarioObject(props)
 {
 	if (!inherited(props, ...)) return false;
-	if (targetdoor) props->AddCall("Target", this, "SetStoneDoor", targetdoor);
 	if (up_action || down_action) props->AddCall("Action", this, "SetActions", up_action, down_action);
 	return true;
 }
@@ -70,7 +65,7 @@ func ConnectNearestDoor()
 {
 	// EditCursor helper command: Connect to nearest door. Return connected door.
 	var door = FindObject(Find_ID(StoneDoor), Sort_Distance());
-	if (door) SetStoneDoor(door);
+	if (door) SetSwitchTarget(door);
 	return door;
 }
 
@@ -121,7 +116,6 @@ func Definition(def)
 	SetProperty("PictureTransformation", Trans_Mul(Trans_Scale(800), Trans_Translate(0,0,0),Trans_Rotate(-20,1,0,0),Trans_Rotate(-30,0,1,0)), def);
 	SetProperty("MeshTransformation", Trans_Rotate(-13,0,1,0), def);
 	if (!def.EditorProps) def.EditorProps = {};
-	def.EditorProps.targetdoor = { Name = "$Target$", Type = "object", Filter = "IsSwitchTarget" };
 	def.EditorProps.up_action = new UserAction.Prop { Name="$UpAction$" };
 	def.EditorProps.down_action = new UserAction.Prop { Name="$DownAction$" };
 	return _inherited(def, ...);

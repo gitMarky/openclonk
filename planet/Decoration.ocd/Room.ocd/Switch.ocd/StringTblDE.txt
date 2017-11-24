@@ -5,6 +5,5 @@ SwitchLeft=Schalter links
 SwitchRight=Schalter rechts
 ConnectNearestDoor=Tuer verbinden
 Rotate=Drehen
-Target=Ziel
 LeftAction=Aktion links
 RightAction=Aktion rechts

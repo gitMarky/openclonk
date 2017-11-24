@@ -1,0 +1,1 @@
+SwitchTarget=Ziel des Schalters

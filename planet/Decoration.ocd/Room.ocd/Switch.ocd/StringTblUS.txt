@@ -5,6 +5,5 @@ SwitchLeft=Switch left
 SwitchRight=Switch right
 ConnectNearestDoor=Connect door
 Rotate=Rotate
-Target=Target
 LeftAction=Action left
 RightAction=Action right
