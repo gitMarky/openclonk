@@ -1,0 +1,2 @@
+InvertSignal=Schaltungslogik invertieren
+InvertSignalDesc=Wenn ein Schalter ein Eingangssignal in diesem Mechanismus setzt, dann übernimmt der Mechanismus stattdessen den invertierten Wert.

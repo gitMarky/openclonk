@@ -1,0 +1,2 @@
+InvertSignal=Invert switch logic
+InvertSignalDesc=When a switch sets the input signal of this mechanism the switch instead uses the inverted value of the signal.

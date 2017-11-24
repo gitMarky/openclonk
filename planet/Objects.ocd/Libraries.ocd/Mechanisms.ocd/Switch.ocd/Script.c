@@ -46,7 +46,7 @@ public func DoSwitchOn(object by_user)
 {
 	if (GetSwitchTarget())
 	{
-		GetSwitchTarget()->OpenDoor(by_user, this);
+		GetSwitchTarget()->SetInputSignal(by_user, this, true);
 	}
 }
 
@@ -63,7 +63,7 @@ public func DoSwitchOff(object by_user)
 {
 	if (GetSwitchTarget())
 	{
-		GetSwitchTarget()->CloseDoor(by_user, this);
+		GetSwitchTarget()->SetInputSignal(by_user, this, false);
 	}
 }
 
