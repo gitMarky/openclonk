@@ -5,11 +5,14 @@
 	- setting the object that gets operated
 	- switching the object on/off as a basic term for describing the operation
 	
+	Needs to call _inherited in the following functions:
+	* Construction()
+	
 	@author Marky
 */
 
 
-local switch_target;
+local lib_switch;
 
 // Legacy function, so that possible errors are avoided for now
 private func SetStoneDoor(object target)
@@ -17,12 +20,23 @@ private func SetStoneDoor(object target)
 	return SetSwitchTarget(target);
 }
 
+
+/*-- Engine callbacks --*/
+
+public func Construction(object by_object)
+{
+	_inherited(by_object, ...);
+	lib_switch = {
+		switch_target = nil,
+	};
+}
+
 /*-- Public Interface --*/
 
 // Sets the object that is operated by this switch
 public func SetSwitchTarget(object target)
 {
-	switch_target = target;
+	lib_switch.switch_target = target;
 	return true;
 }
 
@@ -30,12 +44,12 @@ public func SetSwitchTarget(object target)
 // Gets the object that is operated by this switch
 public func GetSwitchTarget()
 {
-	return switch_target;
+	return lib_switch.switch_target;
 }
 
 
 /*
-  Switches the object on
+  Switches the object on.
 
   Forwards the user = the object that is controlling the switch
   and the switch to the switch target. 
@@ -52,7 +66,7 @@ public func DoSwitchOn(object by_user)
 
 
 /*
-  Switches the object off
+  Switches the object off.
 
   Forwards the user = the object that is controlling the switch
   and the switch to the switch target. 
@@ -72,7 +86,7 @@ public func DoSwitchOff(object by_user)
 public func SaveScenarioObject(proplist props)
 {
 	if (!inherited(props, ...)) return false;
-	if (switch_target) props->AddCall("Target", this, "SetSwitchTarget", switch_target);
+	if (GetSwitchTarget()) props->AddCall("Target", this, "SetSwitchTarget", GetSwitchTarget());
 	return true;
 }
 
