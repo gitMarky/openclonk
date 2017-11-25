@@ -206,7 +206,6 @@ private func EvalAct_CloseDoor(props, context)
 
 /* Properties */
 
-public func IsSwitchTarget() { return true; }
 public func IsDoor() { return true; }
 
 local ActMap = {

@@ -115,3 +115,6 @@ public func Definition(proplist def)
 	return _inherited(def, ...);
 }
 
+/*-- Properties --*/
+
+public func IsSwitchTarget() { return true; }
