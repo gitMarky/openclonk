@@ -1,5 +1,5 @@
 [DefCore]
-id=Library_Mechanism
+id=Library_SwitchTarget
 Version=8,0
 Category=C4D_StaticBack
 HideInCreator=true

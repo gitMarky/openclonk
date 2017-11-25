@@ -5,7 +5,7 @@
 	@authors Ringwaul, Maikel	
 */
 
-#include Library_Mechanism
+#include Library_SwitchTarget
 
 protected func Initialize()
 {
