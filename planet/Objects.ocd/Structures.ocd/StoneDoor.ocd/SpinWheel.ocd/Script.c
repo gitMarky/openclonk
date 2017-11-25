@@ -11,7 +11,7 @@ public func ControlUp(object clonk)
 {
 	if (GetAction() == "Still" && GetSwitchTarget())
 	{
-		DoSwitchOn(clonk);
+		SetSwitchState(true, clonk);
 		SetAction("SpinLeft");
 		Sound("Structures::StoneGate::Chain");
 	}
@@ -23,7 +23,7 @@ public func ControlDown(object clonk)
 {
 	if (GetAction() == "Still" && GetSwitchTarget())
 	{
-		DoSwitchOff(clonk);
+		SetSwitchState(false, clonk);
 		SetAction("SpinRight");
 		Sound("Structures::StoneGate::Chain");
 	}

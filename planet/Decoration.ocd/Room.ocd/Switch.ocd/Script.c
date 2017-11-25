@@ -149,14 +149,7 @@ private func DoSwitchFlip(object clonk, int dir)
 	if (dir > 0)
 	{
 		// Open/close should be aligned to vertical component of direction
-		if (GetR() < 0)
-		{
-			DoSwitchOn(clonk);
-		}
-		else
-		{
-			DoSwitchOff(clonk);
-		}
+		SetSwitchState(GetR() < 0, clonk); // switch on if rotation < 0
 		// Action last; it may delete the door/clonk/etc.
 		if (right_action)
 			UserAction->EvaluateAction(right_action, this, clonk);
@@ -164,14 +157,7 @@ private func DoSwitchFlip(object clonk, int dir)
 	else
 	{
 		// Open/close should be aligned to vertical component of direction
-		if (GetR() < 0)
-		{
-			DoSwitchOff(clonk);
-		}
-		else
-		{
-			DoSwitchOn(clonk);
-		}
+		SetSwitchState(GetR() >= 0, clonk); // switch off if rotation < 0
 		// Action last; it may delete the door/clonk/etc.	
 		if (left_action)
 			UserAction->EvaluateAction(left_action, this, clonk);

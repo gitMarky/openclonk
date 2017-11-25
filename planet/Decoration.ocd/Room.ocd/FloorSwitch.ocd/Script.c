@@ -45,12 +45,12 @@ public func CheckObjects()
 	{
 		if (desired_y == 0)
 		{
-			DoSwitchOff();
+			SetSwitchState(false);
 			UserAction->EvaluateAction(up_action, this);
 		}
 		else if (desired_y == this.MoveDownDistance)
 		{
-			DoSwitchOn();
+			SetSwitchState(true);
 			UserAction->EvaluateAction(down_action, this);
 		}
 	}

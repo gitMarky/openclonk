@@ -49,35 +49,17 @@ public func GetSwitchTarget()
 
 
 /*
-  Switches the object on.
+  Switches the object on or off. Does nothing if the object
+  is not connected to a switch.
 
   Forwards the user = the object that is controlling the switch
   and the switch to the switch target. 
-
-  Calls OpenDoor(by_user, switch) in the object at the moment.
 */
-public func DoSwitchOn(object by_user)
+public func SetSwitchState(bool state, object by_user)
 {
 	if (GetSwitchTarget())
 	{
-		GetSwitchTarget()->SetInputSignal(by_user, this, true);
-	}
-}
-
-
-/*
-  Switches the object off.
-
-  Forwards the user = the object that is controlling the switch
-  and the switch to the switch target. 
-
-  Calls CloseDoor(by_user, switch) in the object at the moment.
-*/
-public func DoSwitchOff(object by_user)
-{
-	if (GetSwitchTarget())
-	{
-		GetSwitchTarget()->SetInputSignal(by_user, this, false);
+		GetSwitchTarget()->SetInputSignal(by_user, this, state);
 	}
 }
 

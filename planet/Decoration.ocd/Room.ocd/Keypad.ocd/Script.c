@@ -42,7 +42,7 @@ public func SetKeypadCode(string to_code)
 
 public func GiveAccess(object clonk)
 {
-	DoSwitchOn(clonk);
+	SetSwitchState(true, clonk);
 	return;
 }
 
