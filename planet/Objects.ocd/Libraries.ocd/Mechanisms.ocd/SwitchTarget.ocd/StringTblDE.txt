@@ -1,4 +1,2 @@
-InvertSignal=Schaltungslogik invertieren
-InvertSignalDesc=Wenn ein Schalter ein Eingangssignal in diesem Mechanismus setzt, dann übernimmt der Mechanismus stattdessen den invertierten Wert.
 SetPlrView=Aktion zeigen
 SetPlrViewDesc=Wenn der Mechanismus über ein Eingangssignal durch einen Spieler bedient wird, zeigt sich das bediente Objekt dem Spieler.

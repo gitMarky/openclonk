@@ -17,7 +17,8 @@ local lib_switch;
 // Legacy function, so that possible errors are avoided for now
 private func SetStoneDoor(object target)
 {
-	return SetSwitchTarget(target);
+	SetSwitchTarget(target);
+	return true;
 }
 
 
@@ -28,6 +29,7 @@ public func Construction(object by_object)
 	_inherited(by_object, ...);
 	lib_switch = {
 		switch_target = nil,
+		invert_signal = false,  // setting this to true inverts the signal
 	};
 }
 
@@ -37,7 +39,6 @@ public func Construction(object by_object)
 public func SetSwitchTarget(object target)
 {
 	lib_switch.switch_target = target;
-	return true;
 }
 
 
@@ -59,9 +60,25 @@ public func SetSwitchState(bool state, object by_user)
 {
 	if (GetSwitchTarget())
 	{
-		GetSwitchTarget()->SetInputSignal(by_user, this, state);
+		// Invert the state?
+		var actual_state = state != lib_switch.invert_signal;
+		// Forward to the target
+		GetSwitchTarget()->SetInputSignal(by_user, this, actual_state);
 	}
 }
+
+
+/*
+ Determines whether the switch signal should be inverted.
+ 
+ @par invert true: logic is inverted. SetSwitchState(true) switches the target off.
+             false: logic is as usual. SetSwitchState(true) switches the target on.
+ */
+public func SetInvertSwitchState(bool invert)
+{
+	lib_switch.invert_signal = invert;
+}
+
 
 /*-- Saving --*/
 
@@ -69,6 +86,7 @@ public func SaveScenarioObject(proplist props)
 {
 	if (!inherited(props, ...)) return false;
 	if (GetSwitchTarget()) props->AddCall("Target", this, "SetSwitchTarget", GetSwitchTarget());
+	if (lib_switch.invert_signal) props->AddCall("Invert", this, "SetInvertSwitchState", lib_switch.invert_signal);
 	return true;
 }
 
@@ -79,5 +97,6 @@ public func Definition(proplist def)
 {
 	if (!def.EditorProps) def.EditorProps = {};
 	def.EditorProps.switch_target = { Name = "$SwitchTarget$", Type = "object", Filter = "IsSwitchTarget" };
+	def.EditorProps.invert_signal = { Name = "$InvertSignal$", EditorHelp="$InvertSignalDesc$", Type="bool", Set="SetInvertSwitchState" };
 	return _inherited(def, ...);
 }
