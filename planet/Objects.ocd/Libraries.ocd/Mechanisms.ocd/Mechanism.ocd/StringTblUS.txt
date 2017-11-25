@@ -1,2 +1,4 @@
 InvertSignal=Invert switch logic
 InvertSignalDesc=When a switch sets the input signal of this mechanism the switch instead uses the inverted value of the signal.
+SetPlrView=Show action
+SetPlrViewDesc=When the mechanism is operated by a player the player view focuses on that object.

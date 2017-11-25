@@ -2,8 +2,6 @@
 
 #include Library_Switch
 
-local temp_light;
-
 public func Initialize()
 {
 	SetAction("Still");
@@ -13,13 +11,6 @@ public func ControlUp(object clonk)
 {
 	if (GetAction() == "Still" && GetSwitchTarget())
 	{
-		if (clonk)
-		{
-			SetPlrView(clonk->GetController(), GetSwitchTarget());
-			if (temp_light) temp_light->RemoveObject();
-			var y_off = GetSwitchTarget()->~GetFloorOffset();
-			temp_light = Global->CreateLight(GetSwitchTarget()->GetX(), GetSwitchTarget()->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
-		}
 		DoSwitchOn(clonk);
 		SetAction("SpinLeft");
 		Sound("Structures::StoneGate::Chain");
@@ -32,13 +23,6 @@ public func ControlDown(object clonk)
 {
 	if (GetAction() == "Still" && GetSwitchTarget())
 	{
-		if (clonk)
-		{
-			SetPlrView(clonk->GetController(), GetSwitchTarget());
-			if (temp_light) temp_light->RemoveObject();
-			var y_off = GetSwitchTarget()->~GetFloorOffset();
-			temp_light = Global->CreateLight(GetSwitchTarget()->GetX(), GetSwitchTarget()->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
-		}
 		DoSwitchOff(clonk);
 		SetAction("SpinRight");
 		Sound("Structures::StoneGate::Chain");

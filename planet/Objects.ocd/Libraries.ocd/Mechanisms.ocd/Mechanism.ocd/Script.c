@@ -23,6 +23,8 @@ public func Construction(object by_object)
 	lib_mechanism = {
 		old_signal = nil,		// the last received signal
 		invert_signal = false,  // setting this to true inverts the signal
+		set_plr_view = true,	// sets the player view to this object when the input signal changes
+		temp_light = nil,		// temporary light, so that the player can see something when the object is being operated
 	};
 }
 
@@ -54,6 +56,17 @@ public func SetInputSignal(object operator, object sender, bool value)
 	{
 		this->~OnInputSignalChanged(operator, sender, new_signal);
 		lib_mechanism.old_signal = new_signal;
+		
+		// Show the object being operated
+		if (operator && lib_mechanism.set_plr_view)
+		{
+			SetPlrView(operator->GetController(), this);
+			if (lib_mechanism.temp_light)
+			{
+				lib_mechanism.temp_light->RemoveObject();
+			}
+			lib_mechanism.temp_light = Global->CreateLight(this->GetX(), this->GetY() + this->~GetFloorOffset(), 30, Fx_Light.LGT_Temp, operator->GetController(), 30, 50);
+		}
 	}
 
 	// Callback type 2: current signal
@@ -70,12 +83,25 @@ public func SetInvertInputSignal(bool invert)
 }
 
 
+/*
+ Determines whether the object should show that it is
+ being operated when the signal changes.
+ 
+ By default this is set to true.
+ */
+public func SetPlrViewOnSignalChange(bool show)
+{
+	lib_mechanism.set_plr_view = show;
+}
+
+
 /*-- Saving --*/
 
 public func SaveScenarioObject(proplist props)
 {
 	if (!inherited(props, ...)) return false;
 	if (lib_mechanism.invert_signal) props->AddCall("Invert", this, "SetInvertInputSignal", lib_mechanism.invert_signal);
+	if (lib_mechanism.set_plr_view) props->AddCall("PlrView", this, "SetPlrViewOnSignalChange", lib_mechanism.set_plr_view);
 	return true;
 }
 
@@ -85,6 +111,7 @@ public func Definition(proplist def)
 {
 	if (!def.EditorProps) def.EditorProps = {};
 	def.EditorProps.invert_signal = { Name = "$InvertSignal$", EditorHelp="$InvertSignalDesc$", Type="bool", Set="SetInvertInputSignal" };
+	def.EditorProps.set_plr_view =  { Name = "$SetPlrView$", EditorHelp="$SetPlrViewDesc$", Type="bool", Set="SetPlrViewOnSignalChange" };
 	return _inherited(def, ...);
 }
 

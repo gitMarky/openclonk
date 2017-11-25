@@ -42,13 +42,7 @@ public func SetKeypadCode(string to_code)
 
 public func GiveAccess(object clonk)
 {
-	if (GetSwitchTarget())
-	{
-		SetPlrView(clonk->GetController(), GetSwitchTarget());
-		var y_off = GetSwitchTarget()->~GetFloorOffset();
-		Global->CreateLight(GetSwitchTarget()->GetX(), GetSwitchTarget()->GetY() + y_off, 30, Fx_Light.LGT_Temp, clonk->GetController(), 30, 50);
-	}
-	DoSwitchOn();
+	DoSwitchOn(clonk);
 	return;
 }
 
