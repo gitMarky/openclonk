@@ -48,6 +48,8 @@ public func Construction(object by_object)
 */
 public func SetInputSignal(object operator, object sender, bool new_signal)
 {
+	var self = this;
+
 	// Callback type 1: rising/falling edge
 	if (lib_mechanism.old_signal != new_signal)
 	{
@@ -55,7 +57,7 @@ public func SetInputSignal(object operator, object sender, bool new_signal)
 		lib_mechanism.old_signal = new_signal;
 		
 		// Show the object being operated
-		if (operator && lib_mechanism.set_plr_view)
+		if (self && operator && lib_mechanism.set_plr_view)
 		{
 			SetPlrView(operator->GetController(), this);
 			if (lib_mechanism.temp_light)
@@ -67,7 +69,10 @@ public func SetInputSignal(object operator, object sender, bool new_signal)
 	}
 
 	// Callback type 2: current signal
-	this->~OnInputSignalSet(operator, sender, new_signal);
+	if (self)
+	{
+		this->~OnInputSignalSet(operator, sender, new_signal);
+	}
 }
 
 
