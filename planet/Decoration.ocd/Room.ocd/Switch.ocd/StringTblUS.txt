@@ -3,7 +3,6 @@ Description=Opens and closes doors and other things. Grab and hit direction keys
 MsgStuck=Stuck :(
 SwitchLeft=Switch left
 SwitchRight=Switch right
-ConnectNearestDoor=Connect door
 Rotate=Rotate
 LeftAction=Action left
 RightAction=Action right

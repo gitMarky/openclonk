@@ -30,14 +30,6 @@ public func SetActions(new_left_action, new_right_action)
 	return true;
 }
 
-public func ConnectNearestDoor()
-{
-	// EditCursor helper command: Connect to nearest door. Return connected door.
-	var door = FindObject(Find_ID(StoneDoor), Sort_Distance());
-	if (door) SetSwitchTarget(door);
-	return door;
-}
-
 public func ControlUp(object clonk)
 {
 	var dir = Rot2Dir(0,-1);
@@ -201,18 +193,21 @@ local Components = { Rock = 3, Metal=1 };
 local left_action, right_action; // Custom editor-selected actions on switch handling
 
 local EditorActions = {
-	SwitchLeft = { Name = "$SwitchLeft$", Command = "ControlSwitchDir(nil, -1)" },
-	SwitchRight = { Name = "$SwitchRight$", Command = "ControlSwitchDir(nil, +1)" },
-	ConnectClosestDoor = { Name = "$ConnectNearestDoor$", Command = "ConnectNearestDoor()" },
-	Rotate = { Name = "$Rotate$", Command = "SetR((GetR()+135)/90*90)" }
 };
 
 func Definition(def)
 {
+	// Graphics
 	SetProperty("PictureTransformation", Trans_Mul(Trans_Scale(800), Trans_Translate(0,0,0),Trans_Rotate(-20,1,0,0),Trans_Rotate(-30,0,1,0)), def);
 	SetProperty("MeshTransformation", Trans_Rotate(-13,0,1,0), def);
+	// Editor properties
 	if (!def.EditorProps) def.EditorProps = {};
 	def.EditorProps.left_action = new UserAction.Prop { Name="$LeftAction$" };
 	def.EditorProps.right_action = new UserAction.Prop { Name="$RightAction$" };
+	// Actions
+	if (!def.EditorActions) def.EditorActions = {};
+	def.EditorActions.SwitchLeft = { Name = "$SwitchLeft$", Command = "ControlSwitchDir(nil, -1)" };
+	def.EditorActions.SwitchRight = { Name = "$SwitchRight$", Command = "ControlSwitchDir(nil, +1)" };
+	def.EditorActions.Rotate = { Name = "$Rotate$", Command = "SetR((GetR()+135)/90*90)" };
 	return _inherited(def, ...);
 }

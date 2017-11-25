@@ -8,6 +8,11 @@
 	Needs to call _inherited in the following functions:
 	* Construction()
 	
+	Additionally, if you define editor actions, define them in the Definition()
+	call. Otherwise, you will overwrite the editor actions that this library
+	defines, namely:
+	* connect nearest switch target
+	
 	@author Marky
 */
 
@@ -95,8 +100,20 @@ public func SaveScenarioObject(proplist props)
 
 public func Definition(proplist def)
 {
+	// Properties
 	if (!def.EditorProps) def.EditorProps = {};
 	def.EditorProps.switch_target = { Name = "$SwitchTarget$", Type = "object", Filter = "IsSwitchTarget" };
 	def.EditorProps.invert_signal = { Name = "$InvertSignal$", EditorHelp="$InvertSignalDesc$", Type="bool", Set="SetInvertSwitchState" };
+	// Actions
+	if (!def.EditorActions) def.EditorActions = {};
+	def.EditorActions.ConnectClosestSwitchTarget = { Name = "$ConnectClosestSwitchTarget$", Command = "ConnectClosestSwitchTarget()" };
 	return _inherited(def, ...);
+}
+
+func ConnectClosestSwitchTarget()
+{
+	// EditCursor helper command: Connect to nearest switch target. Return connected target.
+	var target = FindObject(Find_Func("IsSwitchTarget"), Sort_Distance());
+	if (target) SetSwitchTarget(target);
+	return target;
 }
