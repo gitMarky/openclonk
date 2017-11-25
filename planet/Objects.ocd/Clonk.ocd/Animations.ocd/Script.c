@@ -123,7 +123,7 @@ func FxIntTurnTimer(pTarget, effect, iTime)
 	if(iRot != effect.curr_rot)
 	{
 		effect.curr_rot += BoundBy(iRot-effect.curr_rot, -18, 18);
-		SetMeshTransformation(Trans_Rotate(effect.curr_rot, 0, 1, 0), 0);
+		SetMeshTransformation(Trans_Rotate(effect.curr_rot, 0, 1, 0), CLONK_MESH_TRANSFORM_SLOT_Turn);
 	}
 	effect.rot = iRot;
 	return;
@@ -702,7 +702,7 @@ func FxIntScaleRotTimer(target, eff, time)
 	eff.oldY += BoundBy(eff.yoff-eff.oldY, -500, 500);
 	var turnx = -1000;
 	var turny = 10000;
-	SetMeshTransformation(Trans_Mul(Trans_Translate(eff.oldX-turnx, eff.oldY-turny), Trans_Rotate(eff.oldR,0,0,1), Trans_Translate(turnx, turny)), 1);
+	SetMeshTransformation(Trans_Mul(Trans_Translate(eff.oldX-turnx, eff.oldY-turny), Trans_Rotate(eff.oldR,0,0,1), Trans_Translate(turnx, turny)), CLONK_MESH_TRANSFORM_SLOT_Rotation_Scaling);
 }
 
 func SetScaleRotation (int r, int xoff, int yoff, int rotZ, int turny, bool instant) {
@@ -714,7 +714,7 @@ func SetScaleRotation (int r, int xoff, int yoff, int rotZ, int turny, bool inst
 	if(instant)
 	{
 		RemoveEffect("IntScaleRot", this);
-		SetMeshTransformation(Trans_Mul(Trans_Translate(xoff-turnx, yoff-turny), Trans_Rotate(r,0,0,1), Trans_Translate(turnx, turny), Trans_Rotate(rotZ, 0, 1, 0)), 1);
+		SetMeshTransformation(Trans_Mul(Trans_Translate(xoff-turnx, yoff-turny), Trans_Rotate(r,0,0,1), Trans_Translate(turnx, turny), Trans_Rotate(rotZ, 0, 1, 0)), CLONK_MESH_TRANSFORM_SLOT_Rotation_Scaling);
 	}
 	else
 	{
@@ -1040,6 +1040,7 @@ func FxIntSwimStart(pTarget, effect, fTmp)
 func FxIntSwimTimer(pTarget, effect, iTime)
 {
 	var iSpeed = Distance(0,0,GetXDir(),GetYDir());
+	SetMeshTransformation(nil, CLONK_MESH_TRANSFORM_SLOT_Translation_Dive);
 
 	// TODO: Smaller transition time between dive<->swim, keep 15 for swimstand<->swim/swimstand<->dive
 
@@ -1109,6 +1110,7 @@ func FxIntSwimTimer(pTarget, effect, iTime)
 			// TODO: This should depend on which animation we come from
 			// Guess for SwimStand we should fade from 0, otherwise from 90.
 			effect.rot = 90;
+			effect.yoff = 0;
 		}
 
 		if(iSpeed)
@@ -1120,7 +1122,19 @@ func FxIntSwimTimer(pTarget, effect, iTime)
 		// TODO: Shouldn't weight go by sin^2 or cos^2 instead of linear in angle?
 		var weight = 1000*effect.rot/180;
 		SetAnimationWeight(effect.animation, Anim_Const(1000 - weight));
+		
+		// Adjust graphics position so that it matches the vertices (offset 0 to -5000, with -5000 at 90 degrees or less, while diving down)
+		var y_adjust = -Sin(BoundBy(effect.rot, 90, 180), 5000);
+		effect.yoff += BoundBy(y_adjust - effect.yoff, -100, 100);
+		SetMeshTransformation(Trans_Translate(0, effect.yoff, 0), CLONK_MESH_TRANSFORM_SLOT_Translation_Dive);
 	}
+}
+
+func FxIntSwimStop(object target, proplist effect, int reason, temp)
+{
+	if (temp) return;
+	
+	SetMeshTransformation(nil, CLONK_MESH_TRANSFORM_SLOT_Translation_Dive);
 }
 
 func GetSwimRotation()
