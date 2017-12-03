@@ -1,0 +1,14 @@
+[DefCore]
+id=ElectronicsStation
+Version=8,0
+Category=C4D_Structure
+Width=9
+Height=15
+Offset=-5,-8
+Vertices=4
+VertexX=-4,-4,4,4
+VertexY=-8,6,-8,6
+VertexCNAT=5,9,6,10
+VertexFriction=50,50,100,100
+Construction=1
+Mass=10

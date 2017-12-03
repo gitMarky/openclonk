@@ -1,0 +1,2 @@
+Name=Electronics station
+Description=Connects wires and switches.

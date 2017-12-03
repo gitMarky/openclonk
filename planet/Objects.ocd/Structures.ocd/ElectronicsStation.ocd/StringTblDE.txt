@@ -1,0 +1,2 @@
+Name=Elektronikstation
+Description=Hier kann man Drähte anschließen und mit Schaltern verbinden.

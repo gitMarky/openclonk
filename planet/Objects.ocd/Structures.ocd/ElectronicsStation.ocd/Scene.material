@@ -1,0 +1,66 @@
+material electronics_station 
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            ambient 0.9 0.9 0.9 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.5 0.5 0.5 1.0 12.0
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit 
+            {
+                texture station.jpg
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material electronics_led_off
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            ambient 0.9 0.9 0.9 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.5 0.5 0.5 1.0 12.0
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit 
+            {
+                texture led_off.jpg
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
+material electronics_led_on
+{
+    receive_shadows on
+    technique
+    {
+        pass
+        {
+            ambient 0.9 0.9 0.9 1.0
+            diffuse 1.0 1.0 1.0 1.0
+            specular 0.5 0.5 0.5 1.0 12.0
+            emissive 0.0 0.0 0.0 1.0
+
+            texture_unit 
+            {
+                texture led_on.jpg
+                tex_address_mode wrap
+                filtering trilinear
+            }
+        }
+    }
+}
+
