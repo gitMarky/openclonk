@@ -45,6 +45,13 @@ public func SetAir()
 	is_air_pipe = true;
 }
 
+// Orangeish colour.
+public func SetElectronics()
+{
+	this.LineColors = [RGB(227, 198, 27), RGB(227, 198, 27)];
+	is_air_pipe = false;
+}
+
 // Returns true if this object is a functioning pipe.
 public func IsPipeLine()
 {

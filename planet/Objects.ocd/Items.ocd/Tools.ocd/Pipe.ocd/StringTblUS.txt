@@ -2,10 +2,12 @@ Name=Pipe
 NameSource=Source pipe
 NameDrain=Drain pipe
 NameAir=Air pipe
+NameElectronics=Communication line
 Description=In conjunction with pumps, pipes can be used to transport liquids. Press [Use] in front of a pump to create a source or drain pipe.
 DescriptionSource=Source pipe from which liquid is pulled into the pump.
 DescriptionDrain=Drain pipe where liquids are pumped to.
 DescriptionAir=Air pipes are a good source of oxygen when underwater.
+DescriptionElectronics=Connects switches and electronics stations.
 
 MsgNoNewPipe=There is no pump here.
 MsgNoNewPipeToTank=Connection is not possible here.

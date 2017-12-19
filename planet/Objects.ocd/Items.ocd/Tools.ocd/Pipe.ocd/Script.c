@@ -31,6 +31,7 @@ static const PIPE_STATE_Neutral = nil;
 static const PIPE_STATE_Source = "Source";
 static const PIPE_STATE_Drain = "Drain";
 static const PIPE_STATE_Air = "Air";
+static const PIPE_STATE_Electronics = "Electronics";
 
 local pipe_state = nil;
 
@@ -144,6 +145,7 @@ public func IsNeutralPipe() { return pipe_state == PIPE_STATE_Neutral; }
 public func IsDrainPipe() { return pipe_state == PIPE_STATE_Drain; }
 public func IsSourcePipe() { return pipe_state == PIPE_STATE_Source; }
 public func IsAirPipe() { return pipe_state == PIPE_STATE_Air; }
+public func IsElectronicsPipe() { return pipe_state == PIPE_STATE_Electronics; }
 
 public func GetPipeState() { return pipe_state; }
 
@@ -200,6 +202,20 @@ public func SetAirPipe()
 	var line = GetConnectedLine();
 	if (line)
 		line->SetAir();
+}
+
+public func SetElectronicsPipe()
+{
+	pipe_state = PIPE_STATE_Electronics;
+
+	SetGraphics("Electronics", Pipe, GFX_Overlay, GFXOV_MODE_Picture);
+	SetObjDrawTransform(1000, 0, 0, 0, 1000, 10000, GFX_Overlay);
+	Description = "$DescriptionElectronics$";
+	Name = "$NameElectronics$";
+
+	var line = GetConnectedLine();
+	if (line)
+		line->SetElectronics();
 }
 
 /* ---------- Pipe Connection ---------- */
