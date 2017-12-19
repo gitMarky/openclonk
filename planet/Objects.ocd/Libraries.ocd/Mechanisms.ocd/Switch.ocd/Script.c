@@ -35,6 +35,7 @@ public func Construction(object by_object)
 	lib_switch = {
 		switch_target = nil,
 		invert_signal = false,  // setting this to true inverts the signal
+		actual_signal = false,  // the actual switch signal
 	};
 }
 
@@ -66,10 +67,17 @@ public func SetSwitchState(bool state, object by_user)
 	if (GetSwitchTarget())
 	{
 		// Invert the state?
-		var actual_state = state != lib_switch.invert_signal;
+		lib_switch.actual_signal = state != lib_switch.invert_signal;
 		// Forward to the target
-		GetSwitchTarget()->SetInputSignal(by_user, this, actual_state);
+		GetSwitchTarget()->SetInputSignal(by_user, this, lib_switch.actual_signal);
 	}
+}
+
+
+// Gets the current state of the switch (true = on, false = off)
+public func GetSwitchState()
+{
+	return lib_switch.actual_signal;
 }
 
 

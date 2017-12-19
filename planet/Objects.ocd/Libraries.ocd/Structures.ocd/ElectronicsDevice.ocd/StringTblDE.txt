@@ -1,0 +1,19 @@
+MsgCreatedInput=Eingang angelegt!
+MsgCreatedOutput=Ausgang angelegt!
+
+MenuWireControlInput=Eingänge steuern
+MenuWireControlOutput=Ausgänge steuern
+
+MenuOptionConnectInput=Eingang anschließen
+MenuOptionConnectOutput=Ausgang anschließen
+MenuOptionDisconnectInput=Eingang trennen
+MenuOptionDisconnectOutput=Ausgang trennen
+MenuOptionFixedInput=Eingang (fest)
+MenuOptionFixedOutput=Ausgang (fest)
+MenuOptionInactiveInput=Eingang (frei)
+MenuOptionInactiveOutput=Ausgang (frei)
+
+DescConnectInput=Schließt ein Objekt am Eingang an. Das eingehende Signal wird dann bei der Bestimmung des ausgehenden Signals berücksichtigt.
+DescConnectOutput=Schließt ein Objekt am Ausgang an. Das ausgehende Signal wird an dieses Objekt weitergeleitet. 
+DescDisconnectInput=Trennt ein Objekt, das aktuell am Eingang angeschlossen ist. Dieser Eingang erhält danach kein Signal mehr.
+DescDisconnectOutput=Trennt ein Objekt, das aktuell am Augang angeschlossen ist. Das Objekt erhält danach kein Signal mehr.

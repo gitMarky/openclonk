@@ -1,0 +1,19 @@
+MsgCreatedInput=Created input!
+MsgCreatedOutput=Created output!
+
+MenuWireControlInput=Input control
+MenuWireControlOutput=Output control
+
+MenuOptionConnectInput=Connect input
+MenuOptionConnectOutput=Connect output
+MenuOptionDisconnectInput=Disconnect input
+MenuOptionDisconnectOutput=Disconnect output
+MenuOptionFixedInput=Input (fixed)
+MenuOptionFixedOutput=Output (fixed)
+MenuOptionInactiveInput=Input (free)
+MenuOptionInactiveOutput=Output (free)
+
+DescConnectInput=Connects an object at the input. The incoming signal will be considered for processing the outgoing signal.
+DescConnectOutput=Connects and object at the output. The outgoing signal will be sent to that object. 
+DescDisconnectInput=Disconnects an object that is currently connected to an input. Afterwards, this input will not receive a signal anymore.
+DescDisconnectOutput=Disconnects an object that is currently connected to the output. Afterwards, the object will not receive a signal anymore.

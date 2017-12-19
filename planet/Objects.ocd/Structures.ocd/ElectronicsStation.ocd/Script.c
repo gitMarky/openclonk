@@ -10,6 +10,7 @@
 
 #include Library_Structure
 #include Library_Ownable
+#include Library_ElectronicsDevice
 
 /*-- Properties --*/
 
@@ -27,97 +28,26 @@ local Components = {Metal = 1};
 
 private func IsHammerBuildable() { return true; }
 
-/*-- Pipe / wire control --*/
-
-local wire_output;
-local wire_inputA;
-local wire_inputB;
-
-public func CanConnectPipe(){ return true;}
-
-
-public func QueryConnectPipe(object pipe)
-{
-	// Do not allow connections from this object to itself
-	if (pipe->~IsConnectedTo(this))
-	{
-		return true;
-	}
-	// Allow neutral connection only if there is no output
-	if (pipe->IsNeutralPipe() && GetWireOutput())
-	{
-		return true;
-	}
-	// Allow electronics connection only if there are free inputs
-	// that is if not both are connected
-	if (pipe->IsElectronicsPipe())
-	{
-		return GetWireInputA() && GetWireInputB();
-	}
-	// Allow connection of neutral or electronics pipes only
-	return !(pipe->IsNeutralPipe() || pipe->IsElectronicsPipe());
-}
-
-
-public func OnPipeConnect(object pipe, string specific_pipe_state)
-{
-	if (pipe->IsNeutralPipe())
-	{
-		SetWireOutput(pipe);
-		pipe->SetElectronicsPipe();
-		pipe->Report("$MsgCreatedOutput$");
-	}
-	else if (pipe->~IsElectronicsPipe())
-	{
-		// Connect a second input?
-		if (GetWireInputA())
-		{
-			if (!GetWireInputB())
-			{
-				SetWireInputB(pipe);
-				pipe->Report("$MsgCreatedInputB$");
-			}
-		}
-		// Create the first input
-		else
-		{
-			SetWireInputA(pipe);
-			pipe->Report("$MsgCreatedInputA$");
-		}
-	}
-	UpdateStatus();
-}
-
-
 /*-- Handle Connections --*/
 
-public func GetWireOutput() { return wire_output;}
-public func GetWireInputA() { return wire_inputA;}
-public func GetWireInputB() { return wire_inputB;}
+public func GetWireOutputMaxAmount() { return 1; }
+public func GetWireInputMaxAmount() { return 2; }
 
-public func SetWireOutput(object pipe)
-{
-	wire_output = pipe;
-	return pipe;
-}
+public func HasWireControlInputMenuEntriesReversed() { return true; } // Looks better than ordering the LEDs differently
 
-public func SetWireInputA(object pipe)
+private func UpdateWireStatus()
 {
-	wire_inputA = pipe;
-	return pipe;
-}
+	_inherited(...);
 
-public func SetWireInputB(object pipe)
-{
-	wire_inputB = pipe;
-	return pipe;
-}
-
-private func UpdateStatus()
-{
-	SetLEDactive(2, !!GetWireInputB());
-	SetLEDactive(1, !!GetWireInputA());
-	SetLEDactive(0, !!GetWireOutput());
+	// Input or output is connected?
+	var led2 = SetLEDactive(2, !!GetWireInput(1));
+	var led1 = SetLEDactive(1, !!GetWireInput(0));
+	var led0 = SetLEDactive(0, !!GetWireOutput(0));
+	
+	// Input or output state, only if active
+	SetLEDstate(2, led2 && GetWireInputState(1));
+	SetLEDstate(1, led1 && GetWireInputState(0));
+	SetLEDstate(0, led0 && GetWireOutputState());
 }
 
 /*-- Displaying this object --*/
@@ -126,6 +56,7 @@ private func UpdateStatus()
 private func SetLEDactive(int index, bool on)
 {
 	SetMeshMaterial(GetLEDmaterial(on), index + 1);
+	return on;
 }
 
 // Sets the LED itself on or off

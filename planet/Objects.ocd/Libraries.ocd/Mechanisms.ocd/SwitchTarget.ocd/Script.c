@@ -48,6 +48,11 @@ public func Construction(object by_object)
 */
 public func SetInputSignal(object operator, object sender, bool value)
 {
+	// Handle inherited code
+	var self = this;
+	_inherited(operator, sender, value, ...);
+	if (!self) return;
+	
 	// Show the object being operated
 	if (operator && lib_mechanism.set_plr_view)
 	{

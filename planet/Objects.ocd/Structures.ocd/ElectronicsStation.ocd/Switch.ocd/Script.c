@@ -1,14 +1,37 @@
 /*-- Switch --*/
 
+#include Library_Structure
+#include Library_Ownable
 #include Library_Switch
+
 
 local last_controlling_clonk;
 local handle_position;
+local station;
+
+public func Construction(object by_object)
+{
+	SetAction("Default");
+	return _inherited(by_object, ...);
+}
+
 
 public func Initialize()
 {
-	SetAction("Idle");
+	station = CreateObject(ElectronicsStation, -2 + 6 * GetDir(), -2, GetOwner());
+	SetSwitchTarget(station);
+	station->SetWireInput(0, this);
+	station->AddInteractionMenuListener(this); // Receive interaction menu updates from the station
+	station.HasInteractionMenu = this.DisableInteractionMenu; // Disable interaction with the station
+	return _inherited(...);
 }
+
+
+private func Destruction()
+{
+	if (station) station->RemoveObject();
+}
+
 
 public func SaveScenarioObject(props)
 {
@@ -151,11 +174,27 @@ private func DoSwitchFlip(object clonk, int dir)
 private func SwitchingLeft() { return SwitchingTimer(-1); }
 private func SwitchingRight() { return SwitchingTimer(+1); }
 
+/*-- Properties --*/
+
 local ActMap = {
+	Default = {
+		Prototype = Action,
+		Name = "Default",
+		Procedure = DFA_NONE,
+		Directions = 2,
+		FlipDir = 1,
+		Length = 1,
+		Delay = 0,
+		FacetBase = 1,
+		NextAction = "Default",
+	},
+
 	SwitchLeft = {
 		Prototype = Action,
 		Name = "SwitchLeft",
 		Procedure = DFA_NONE,
+		Directions = 2,
+		FlipDir = 1,
 		Length = 1,
 		Delay = 1,
 		NextAction = "SwitchLeft",
@@ -166,6 +205,8 @@ local ActMap = {
 		Prototype = Action,
 		Name = "SwitchRight",
 		Procedure = DFA_NONE,
+		Directions = 2,
+		FlipDir = 1,
 		Length = 1,
 		Delay = 1,
 		NextAction = "SwitchRight",
@@ -199,4 +240,63 @@ func Definition(def)
 	def.EditorActions.SwitchRight = { Name = "$SwitchRight$", Command = "ControlSwitchDir(nil, +1)" };
 	def.EditorActions.Rotate = { Name = "$Rotate$", Command = "SetR((GetR()+135)/90*90)" };
 	return _inherited(def, ...);
+}
+
+
+// Definition call by the construction previewer
+func ConstructionPreview(object previewer, int overlay, int dir)
+{
+	if (GetType(this) != C4V_Def) return;
+	if (overlay != ConstructionPreviewer.GFX_PreviewerPictureOverlay) return;
+
+	previewer->SetGraphics(nil, ElectronicsStation, overlay, GFXOV_MODE_Base);
+	previewer->SetObjDrawTransform(1000, 0, 2500 * (dir*2-1), 0, 1000, -2000, overlay);
+	return true;
+}
+
+// Definition call by the construction site
+public func SetConstructionSiteOverlay(object site, int direction, object combine_with)
+{
+	// Set the shape of the construction site.
+	var w = this->~GetSiteWidth(direction, combine_with) ?? this->GetDefWidth();
+	var h = this->~GetSiteHeight(direction, combine_with) ?? this->GetDefHeight();
+
+	site->SetConstructionSiteOverlayDefault(this, direction, combine_with, w, h);
+
+	if (combine_with && combine_with->~IsBasement()) return;
+	return true;
+}
+
+
+private func IsHammerBuildable() { return true; }
+
+/*-- Wire connections --*/
+
+public func GetWireOutputMaxAmount() { return 1; }
+
+/*-- Interactions -- 
+
+ Will be redirected from the station.
+*/
+
+
+public func HasInteractionMenu()
+{
+	return !!station;
+}
+
+public func GetInteractionMenus(object clonk)
+{
+	var menus = _inherited(clonk, ...) ?? [];
+	
+	if (station)
+	{
+		menus = Concatenate(menus, station->~GetInteractionMenus(clonk));
+	}
+	return menus;
+}
+
+public func DisableInteractionMenu()
+{
+	return false; // this is not called, but replaces the function in the electronics station
 }
