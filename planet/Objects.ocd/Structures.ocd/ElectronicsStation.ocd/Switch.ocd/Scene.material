@@ -5,14 +5,14 @@ material Switch_Base
     {
         pass
         {
-            ambient 0.9 0.9 0.9 1.0
+            ambient 0.7 0.7 0.7 1.0
             diffuse 1.0 1.0 1.0 1.0
             specular 0.5 0.5 0.5 1.0 12.0
             emissive 0.0 0.0 0.0 1.0
 
             texture_unit 
             {
-                texture black.png
+                texture switch_base.jpg
                 tex_address_mode wrap
                 filtering trilinear
             }
@@ -27,14 +27,14 @@ material Switch_Lever
     {
         pass
         {
-            ambient 0.9 0.9 0.9 1.0
+            ambient 0.7 0.7 0.7 1.0
             diffuse 1.0 1.0 1.0 1.0
             specular 0.5 0.5 0.5 1.0 12.0
             emissive 0.0 0.0 0.0 1.0
 
             texture_unit 
             {
-                texture black.png
+                texture switch_lever.jpg
                 tex_address_mode wrap
                 filtering trilinear
             }
