@@ -6,6 +6,7 @@
 */
 
 #include Library_HasExtraSlot
+#include Library_SwitchTarget
 
 static const DYNA_MaxLength = 500;
 static const DYNA_MaxCount  = 5;
@@ -192,7 +193,12 @@ public func ControlUse(object clonk, int x, int y)
 {
 	var dynamite = Contents();
 
+	// Wrong contents?
 	if (!dynamite || dynamite->GetID() != Dynamite)
+		return false;
+		
+	// Connected to a switch/wire? Prevent turning into an igniter
+	if (GetConnectedPipe() && ContentsCount() <= 1)
 		return false;
 
 	if (!dynamite->ControlPlace(clonk, x, y, 1))
@@ -272,6 +278,53 @@ public func SaveScenarioObject(proplist props)
 func Definition(def)
 {
 	SetProperty("PictureTransformation", Trans_Mul(Trans_Rotate(150, 1, 0, 0), Trans_Rotate(140, 0, 1, 0)), def);
+}
+
+
+/*-- Switches --*/
+
+
+// Operated by a switch
+public func OnSetInputSignal(object operator, object sender, bool explode)
+{
+	// Update controller for kill tracing
+	if (operator)
+	{
+		SetController(operator->GetOwner());
+	}
+	// Booom!
+	if (explode)
+	{
+		DoExplode();
+	}
+}
+
+// Wire connections
+
+private func CanConnectPipe(){ return true;}
+
+private func GetConnectedPipe()
+{
+	return FindObject(Find_Func("IsConnectedTo", this));
+}
+
+private func QueryConnectPipe(object pipe)
+{
+    var no_electronics_pipe = !(pipe->IsElectronicsPipe()); // Allow connecting electronics pipes exclusively
+    var already_has_wire = !!GetConnectedPipe(); // Allow connection only if not already connected to one
+    var in_container = !!Contained(); // Do not allow connection while contained
+    var no_contents = ContentsCount() == 0; // Do not allow connection if empty (this should not occur, but just in case)
+	return no_electronics_pipe || already_has_wire || in_container || no_contents;
+}
+
+private func OnPipeConnect(object pipe, string specific_pipe_state)
+{
+	// This can cause an immediate explosion... have fun :)
+	var source = pipe->~GetConnectedLine()->~GetConnectedObject(this);
+	if (source)
+	{
+		source->~UpdateOutputState();
+	}
 }
 
 /*-- Properties --*/
