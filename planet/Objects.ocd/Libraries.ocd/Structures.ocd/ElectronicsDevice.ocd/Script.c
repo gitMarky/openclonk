@@ -165,12 +165,13 @@ public func QueryConnectPipe(object pipe)
 	// Connect only as long as there is a free input or output
 	var free_output = GetUnusedWireOutputIndex();
 	var free_input = GetUnusedWireInputIndex();
-	if (free_output == nil && free_input == nil)
+	if ((free_output != nil && pipe->IsNeutralPipe()) // Allow connecting neutral pipes to free outputs
+	 || (free_input != nil && pipe->IsElectronicsPipe())) // Allow connecting electronics pipes to free inputs
 	{
-		return true;
+		return false;
 	}
-	// Allow connection of neutral or electronics pipes only
-	return !(pipe->IsNeutralPipe() || pipe->IsElectronicsPipe());
+	// Forbid all other situations
+	return true;
 }
 
 
@@ -182,6 +183,7 @@ public func OnPipeConnect(object pipe, string specific_pipe_state)
 
 		if (free_output == nil)
 		{
+			pipe->CutLineConnection(this);
 		}
 		else
 		{
@@ -196,6 +198,7 @@ public func OnPipeConnect(object pipe, string specific_pipe_state)
 		
 		if (free_input == nil)
 		{
+			pipe->CutLineConnection(this);
 		}
 		else
 		{
