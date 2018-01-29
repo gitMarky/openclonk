@@ -158,7 +158,8 @@ public func CanConnectPipe(){ return true;}
 public func QueryConnectPipe(object pipe)
 {
 	// Do not allow connections from this object to itself
-	if (pipe->~IsConnectedTo(this))
+	if (pipe->~IsConnectedTo(this)
+	 || pipe->~GetConnectedLine() && pipe->GetConnectedLine()->~IsConnectedTo(this))
 	{
 		return true;
 	}
