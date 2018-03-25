@@ -260,6 +260,13 @@ func ApplyShieldFactor(pFrom, pTo, damage)
 	return shield;
 }
 
+
+/*
+ Starts weapon hit check.
+ 
+ @par iLength The weapon checks for hits this long.
+ @par iInterval The checks happen in this interval.
+ */
 func StartWeaponHitCheckEffect(pClonk, iLength, iInterval)
 {
 	AddEffect("IntWeaponCharge", pClonk, 10, iInterval, this, nil, iLength);

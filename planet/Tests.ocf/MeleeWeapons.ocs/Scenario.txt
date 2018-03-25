@@ -1,0 +1,5 @@
+[Head]
+Title=Melee Weapons
+
+[Landscape]
+NoScan=1
