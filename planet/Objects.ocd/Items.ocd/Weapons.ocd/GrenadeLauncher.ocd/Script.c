@@ -106,8 +106,8 @@ public func ControlUseStart(object clonk, int x, int y)
 	if(!Contents(0))
 	{
 		// put something inside
-		var obj;
-		if(obj = FindObject(Find_Container(clonk), Find_Func("IsGrenadeLauncherAmmo")))
+		var obj = FindObject(Find_Container(clonk), Find_Func("IsGrenadeLauncherAmmo"));
+		if (obj)
 		{
 			obj->Enter(this);
 		}
@@ -251,6 +251,11 @@ public func GetCarryTransform(object clonk, bool idle, bool nohand, bool second_
 public func OnRelaunchCreation()
 {
 	CreateContents(IronBomb);
+}
+
+public func IsExplosive()
+{
+	return !!FindObject(Find_Container(this), Find_Func("IsExplosive"));
 }
 
 func Definition(def)

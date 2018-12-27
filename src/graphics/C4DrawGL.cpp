@@ -203,6 +203,7 @@ bool CStdGL::PrepareSpriteShader(C4Shader& shader, const char* name, int ssc, C4
 	uniformNames[C4SSU_NormalMatrix] = "normalMatrix";
 	uniformNames[C4SSU_ClrMod] = "clrMod";
 	uniformNames[C4SSU_Gamma] = "gamma";
+	uniformNames[C4SSU_Resolution] = "resolution";
 	uniformNames[C4SSU_BaseTex] = "baseTex";
 	uniformNames[C4SSU_OverlayTex] = "overlayTex";
 	uniformNames[C4SSU_OverlayClr] = "overlayClr";
@@ -346,6 +347,10 @@ CStdGLCtx *CStdGL::CreateContext(C4Window * pWindow, C4AbstractApp *pApp)
 				LogSilentF("GLExt: %s", gl_extensions ? gl_extensions : "");
 			}
 		}
+		if (!success)
+		{
+			pApp->MessageDialog("Error while initializing OpenGL. Check the log file for more information. This usually means your GPU is too old.");
+		}
 	}
 	if (!success)
 	{
@@ -353,6 +358,10 @@ CStdGLCtx *CStdGL::CreateContext(C4Window * pWindow, C4AbstractApp *pApp)
 	}
 	// creation selected the new context - switch back to previous context
 	RenderTarget = nullptr;
+#ifdef WITH_QT_EDITOR
+	// FIXME This is a hackfix for #1813 / #1956. The proper way to fix them would probably be to select a drawing context before invoking C4Player::FinalInit
+	if (!app->isEditor)
+#endif
 	pCurrCtx = nullptr;
 	// done
 	return pCtx;
@@ -600,6 +609,10 @@ void CStdGL::PerformMultiBlt(C4Surface* sfcTarget, DrawOperation op, const C4Blt
 	// Only direct rendering
 	assert(sfcTarget->IsRenderTarget());
 	if(!PrepareRendering(sfcTarget)) return;
+
+	// Set resolution. The other uniforms are set in SetupMultiBlt, but the
+	// surface size is still unknown there.
+	shader_call->SetUniform2f(C4SSU_Resolution, sfcTarget->Wdt, sfcTarget->Hgt);
 
 	// Select a buffer
 	const unsigned int vbo_index = CurrentVBO;

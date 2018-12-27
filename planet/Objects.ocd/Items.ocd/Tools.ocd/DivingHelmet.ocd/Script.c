@@ -45,7 +45,9 @@ public func QueryAirNeed(object pump)
 {
 	var wearer = Contained();
 	if (wearer && IsWorn())
+	{
 		return wearer->~GetBreath() < wearer->~GetMaxBreath();
+	}
 	return false;
 }
 
@@ -103,28 +105,33 @@ func OnPipeDisconnect(object pipe)
 
 	var other = air_pipe->GetConnectedObject(this);
 	if (!other || other->GetID() != Pump)
+	{
 		pipe->SetNeutralPipe();
+	}
 	pipe->SetDrainPipe();
 	other->~CheckState();
 }
 
 // Called by the interaction menu (OnPipeControl)
-public func DoConnectPipe(object pipe, string specific_pipe_state)
+public func DoConnectPipe(object pipe, string specific_pipe_state, object clonk)
 {
 	if (!pipe) return;
 
 	if (GetConnectedPipe())
-		DoCutPipe(GetConnectedPipe());
+	{
+		DoCutPipe(GetConnectedPipe(), clonk);
+	}
 
 	pipe->ConnectPipeTo(this, PIPE_STATE_Air);
 }
 
 // Called by the interaction menu (OnPipeControl)
-public func DoCutPipe(object pipe)
+public func DoCutPipe(object pipe, object clonk)
 {
-	if (pipe)
-		if (pipe->~GetPipeKit())
-			pipe->GetPipeKit()->CutLineConnection(this);
+	if (pipe && pipe->~GetPipeKit())
+	{
+		pipe->GetPipeKit()->CutLineConnection(this, clonk);
+	}
 }
 
 /*-- Usage --*/
@@ -132,9 +139,13 @@ public func DoCutPipe(object pipe)
 public func ControlUse(object clonk)
 {
 	if (IsWorn())
+	{
 		TakeOff();
+	}
 	else
+	{
 		PutOn(clonk);
+	}
 
 	return true;
 }
@@ -152,23 +163,25 @@ public func GetConnectedPipe()
 }
 
 // Do not accept source pipes
-public func QueryConnectPipe(object pipe)
+public func QueryConnectPipe(object pipe, bool do_msg)
 {
 	if (GetConnectedPipe())
 	{
-		pipe->Report("$MsgHasPipe$");
+		if (do_msg)
+		{
+			pipe->Report("$MsgHasPipe$");
+		}
 		return true;
 	}
-
 	if (pipe->IsSourcePipe())
 	{
-		pipe->Report("$MsgPipeProhibited$");
+		if (do_msg)
+		{
+			pipe->Report("$MsgPipeProhibited$");
+		}
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 
@@ -242,12 +255,16 @@ public func OnPipeControlHover(id symbol, string action, desc_menu_target, menu_
 	GuiUpdateText(text, menu_id, 1, desc_menu_target);
 }
 
-public func OnPipeControl(symbol_or_object, string action, bool alt)
+public func OnPipeControl(symbol_or_object, string action, object clonk)
 {
 	if (action == "cutpipe")
-		this->DoCutPipe(air_pipe);
+	{
+		this->DoCutPipe(air_pipe, clonk);
+	}
 	else if (action == "connectpipe")
-		this->DoConnectPipe(symbol_or_object);
+	{
+		this->DoConnectPipe(symbol_or_object, nil, clonk);
+	}
 
 	UpdateInteractionMenus(this.GetPipeControlMenuEntries);	
 }
@@ -255,10 +272,8 @@ public func OnPipeControl(symbol_or_object, string action, bool alt)
 func FindAvailablePipe(object container)
 {
 	for (var pipe in FindObjects(Find_ID(Pipe), Find_Container(container), Find_Or(Find_Func("IsAirPipe"), Find_Func("IsDrainPipe"), Find_Func("IsNeutralPipe"))))
-	{
-		if (!this->~QueryConnectPipe(pipe))
+		if (!this->~QueryConnectPipe(pipe, false))
 			return pipe;
-	}
 	return nil;
 }
 

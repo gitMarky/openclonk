@@ -110,18 +110,18 @@ protected func OnActionChanged(string oldaction)
 		Description	= A description of what the interaction does
 		IconID		= ID of the definition that contains the icon (like GetInteractionMetaInfo)
 		IconName	= Name of the graphic for the icon (like GetInteractionMetaInfo)
-		Priority	= Where to sort in in the interaction-list. 0=front, 10=after script, 20=after vehicles, 30=after structures, nil means no preverence
+		Priority	= Where to sort in in the interaction-list. 0=front, 10=after script, 20=after vehicles, 30=after structures, nil means no preference
 */
 public func GetExtraInteractions()
 {
 	var functions = _inherited(...) ?? [];
 	
 	// flipping construction-preview
-	var effect;
-	if(effect = GetEffect("ControlConstructionPreview", this))
+	var fx = GetEffect("ControlConstructionPreview", this);
+	if (fx)
 	{
-		if(effect.flipable)
-			PushBack(functions, {Fn = "Flip", Description=ConstructionPreviewer->GetFlipDescription(), Object=effect.preview, IconID=ConstructionPreviewer_IconFlip, Priority=0});
+		if (fx.flipable)
+			PushBack(functions, {Fn = "Flip", Description=ConstructionPreviewer->GetFlipDescription(), Object=fx.preview, IconID=ConstructionPreviewer_IconFlip, Priority=0});
 	}
 	// call elevator cases
 	var elevators = FindObjects(Find_ID(ElevatorCase), Find_InRect(-ELEVATOR_CALL_DISTANCE, AbsY(0), ELEVATOR_CALL_DISTANCE * 2, GetY() + AbsY(LandscapeHeight())), Find_Func("Ready", this));
@@ -153,7 +153,7 @@ public func ObjectControl(int plr, int ctrl, int x, int y, int strength, bool re
 		}
 		// Open contents menu.
 		CancelUse();
-		GUI_ObjectInteractionMenu->CreateFor(this);
+		GUI_ObjectInteractionMenu->CreateFor(this, GUI_OIM_NewStyle);
 		// the interaction menu calls SetMenu(this) in the clonk
 		// so after this call menu = the created menu
 		if(GetMenu())
@@ -636,8 +636,6 @@ public func ControlJumpExecute(int ydir)
 		if (GetProcedure() == "SCALE" || GetAction() == "Climb")
 		{
 			AddEffect("WallKick", this, 1);
-			SetAction("Jump");
-
 			var xdir;
 			if(GetDir() == DIR_Right)
 			{
@@ -652,13 +650,16 @@ public func ControlJumpExecute(int ydir)
 
 			SetYDir(-ydir * GetCon(), 100 * 100);
 			SetXDir(xdir * 17);
+			// Set speed first to have proper animations when jump starts.
+			SetAction("Jump");
 			return true;
 		}
 		//Normal jump
 		else
 		{
-			SetAction("Jump");
 			SetYDir(-ydir * GetCon(), 100 * 100);
+			// Set speed first to have proper animations when jump starts.
+			SetAction("Jump");
 			return true;
 		}
 	}

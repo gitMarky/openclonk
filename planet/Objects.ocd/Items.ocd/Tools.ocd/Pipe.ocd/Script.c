@@ -222,9 +222,10 @@ public func SetElectronicsPipe()
 /* ---------- Pipe Connection ---------- */
 
 
-func ConnectPipeTo(object target, string specific_pipe_state, bool block_cutting)
+public func ConnectPipeTo(object target, string specific_pipe_state, bool block_cutting)
 {
-	if (!target || target->~QueryConnectPipe(this)) return false;
+	if (!target || target->~QueryConnectPipe(this, true))
+		return false;
 	AddLineConnectionTo(target, block_cutting);
 	target->OnPipeConnect(this, specific_pipe_state);
 	Sound("Objects::Connect");
@@ -260,7 +261,7 @@ public func GetConnectedLine()
       
  @par target the target object
  */
-func AddLineConnectionTo(object target, bool block_cutting)
+public func AddLineConnectionTo(object target, bool block_cutting)
 {
 	var line = GetConnectedLine();
 	if (line)
@@ -270,7 +271,8 @@ func AddLineConnectionTo(object target, bool block_cutting)
 			line->SwitchConnection(this, target);
 			SetPipeLine(line);
 			line.BlockPipeCutting = block_cutting;
-			ScheduleCall(this, this.Enter, 1, nil, line); // delayed entrance, so that the message is still displayed above the clonk
+			// Delayed entrance, so that the message is still displayed above the clonk.
+			ScheduleCall(this, this.Enter, 1, nil, line);
 			return line;
 		}
 		else
@@ -292,30 +294,43 @@ func AddLineConnectionTo(object target, bool block_cutting)
        connected to the line.
  
  @par target the target object
+ @par possible_container a container that should try to collect the pipe.
  */
-func CutLineConnection(object target)
+public func CutLineConnection(object target, object possible_container)
 {
 	var line = GetConnectedLine();
 	if (!line) return;
+	var allow_pickup = false;
 
-	// connected only to the kit and a structure
+	// Connected only to the kit and a structure
 	if (line->IsConnectedTo(this, true)) 
 	{
 		target->OnPipeDisconnect(this);
 		line->RemoveObject();
+		// Collection by container, should be near enough or else you'd be able to 
+		// retrieve a line where the line kit is down a well, but you simply detach it from the pump...
+		// Radius is the same as picking up objects via the surrounding
+		allow_pickup = ObjectDistance(possible_container, this) <= Helper_Surrounding.Radius;
 	}
-	// connected to the target and another structure
+	// Connected to the target and another structure
 	else if (line->IsConnectedTo(target, true))
 	{
 		target->OnPipeDisconnect(this);
-		Exit(); // the kit was inside the line at this point.
+		Exit(); // The kit was inside the line at this point.
 		SetPosition(target->GetX(), target->GetY() + target->GetBottom() - this->GetBottom());
 		line->SwitchConnection(target, this);
 		SetPipeLine(line);
+		// Can be picked up always
+		allow_pickup = true;
 	}
 	else
 	{
 		FatalError(Format("An object %v is trying to cut the pipe connection, but only objects %v and %v may request a disconnect", target, line->GetActionTarget(0), line->GetActionTarget(1)));
+	}
+	// Pick it up	
+	if (possible_container && allow_pickup)
+	{
+		possible_container->Collect(this);
 	}
 }
 
@@ -333,7 +348,7 @@ public func QueryCutLineConnection(object target)
  @par target the target object.
  @return object the line that was created
  */
-func CreateLine(object target, bool block_cutting)
+public func CreateLine(object target, bool block_cutting)
 {
 	// Create and connect pipe line.
 	pipe_line = CreateObject(PipeLine, 0, 0, NO_OWNER);
@@ -350,22 +365,29 @@ protected func ControlUse(object clonk, int x, int y)
 	var target = FindObject(Find_AtPoint(), Find_Func("CanConnectPipe"));
 	if (target)
 	{
-		ConnectPipeTo(target);
+		ConnectPipeTo(target, GetPipeState());
 	}
 	return true;
 }
 
+// Returns to which object the given object is connected through this pipe.
+public func GetConnectedObject(object obj)
+{
+	if (!pipe_line)
+		return;
+	return pipe_line->GetConnectedObject(obj);
+}
 
 /**
  Displays a message at top-level container of this object.
  @par message the message
  */
-func Report(string message)
+public func Report(string message)
 {
 	var reporter = this;
 	var next = Contained();
 	
-	while(next)
+	while (next)
 	{
 		reporter = next;
 		next = reporter->Contained();

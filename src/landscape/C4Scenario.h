@@ -126,6 +126,8 @@ public:
 
 	C4SRealism Realism;
 
+	bool EvaluateOnAbort;
+
 public:
 	bool IsMelee();
 	void Default();
@@ -167,7 +169,7 @@ public:
 	C4IDList InEarth;
 	int32_t BottomOpen,TopOpen;
 	int32_t LeftOpen,RightOpen;
-	bool AutoScanSideOpen;
+	int32_t AutoScanSideOpen;
 	std::string SkyDef;
 	int32_t SkyDefFade[6];
 	bool NoScan;

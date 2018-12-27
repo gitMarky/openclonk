@@ -62,7 +62,7 @@ public func StartSearchLadder()
 
 public func AddSearchLadderEffect()
 {
-	if (!GetEffect("InSearchLadder", this))
+	if (!GetEffect("IntSearchLadder", this))
 		AddEffect("IntSearchLadder", this, 1, 2, this);
 	FxIntSearchLadderTimer();
 	return;
@@ -84,7 +84,7 @@ public func FxIntSearchLadderTimer(object target, proplist effect, int time)
 		
 	// Find a ladder which can be climbed.
 	var ladder;
-	for (ladder in FindObjects(Find_AtRect(-5, -10, 10, 8), Find_Func("IsLadder"), Find_NoContainer(), Find_Layer(GetObjectLayer())))
+	for (ladder in FindObjects(Find_AtRect(-5, -10, 10, 8), Find_NoContainer(), Find_Property("IsLadder"), Find_Layer(GetObjectLayer())))
 	{
 		// Don't climb ladders that are blocked.
 		if (ladder->~CanNotBeClimbed(false, this) || IsBlockedLadder(ladder))
@@ -120,7 +120,7 @@ private func IsBlockedLadder(object ladder)
 	var index = 0;
 	var fx;
 	while (fx = GetEffect("IntBlockLadder", this, index++))
-		if (fx.ladder->IsSameLadder(ladder))
+		if (fx.ladder && fx.ladder->IsSameLadder(ladder))
 			return true;
 	return false;
 }
@@ -148,7 +148,6 @@ public func FxIntClimbControlStart(object target, effect fx, int tmp, object lad
 	fx.ladder = ladder;
 	SetXDir(0);
 	SetYDir(0);
-	SetComDir(COMD_Stop);
 	// Start on an even segment.
 	fx.odd = 0;
 	// Correctly initalize the relative y-position of the clonk to the segment.

@@ -169,7 +169,7 @@ protected func Death(int killed_by)
 		}
 	}
 	CloseEyes(1);
-	
+
 	return true;
 }
 
@@ -280,6 +280,13 @@ public func RejectInteractionMenu(object to)
 	if (!GetAlive())
 		return Format("$MsgDeadClonk$", GetName());
 	return _inherited(to, ...);
+}
+
+// You can not display the Clonk as a content entry in a building.
+// Otherwise you can transfer a crew member to your inventory...
+public func RejectInteractionMenuContentEntry(object menu_target, object container)
+{
+	return true;
 }
 
 public func GetSurroundingEntryMessage(object for_clonk)
@@ -1261,6 +1268,7 @@ local JumpSpeed = 400;
 local ThrowSpeed = 294;
 local NoBurnDecay = true;
 local ContactIncinerate = 10;
+local FireproofContainer = true; // Don't burn down all tools/resources when the clonk dips into lava for a short time
 local BorderBound = C4D_Border_Sides;
 
 func Definition(def) {

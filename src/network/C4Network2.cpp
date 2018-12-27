@@ -1022,20 +1022,18 @@ void C4Network2::OnPuncherConnect(C4NetIO::addr_t addr)
 	C4Network2Client *pLocal = Clients.GetLocal();
 	if (pLocal)
 	{
-		pLocal->AddAddr(C4Network2Address(maybe_v4, P_UDP), true);
-		// If the outside port matches the inside port, there is no port translation and the
-		// TCP address will probably work as well.
-		if (addr.GetPort() == Config.Network.PortUDP && Config.Network.PortTCP > 0)
-		{
-			maybe_v4.SetPort(Config.Network.PortTCP);
-			pLocal->AddAddr(C4Network2Address(maybe_v4, P_TCP), true);
-		}
+		pLocal->AddAddrFromPuncher(maybe_v4);
 		// Do not ::Network.InvalidateReference(); yet, we're expecting an ID from the netpuncher
 	}
-	// Client connection: request packet from host.
-	if (!isHost())
+	auto family = maybe_v4.GetFamily();
+	if (isHost())
 	{
-		auto family = maybe_v4.GetFamily();
+		// Host connection: request ID from netpuncher
+		NetIO.SendPuncherPacket(C4NetpuncherPacketIDReq(), family);
+	}
+	else
+	{
+		// Client connection: request packet from host.
 		if (Status.getState() == GS_Init && getNetpuncherGameID(family))
 			NetIO.SendPuncherPacket(C4NetpuncherPacketSReq(getNetpuncherGameID(family)), family);
 	}

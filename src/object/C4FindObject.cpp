@@ -84,7 +84,12 @@ C4FindObject *C4FindObject::CreateByValue(const C4Value &DataVal, C4SortObject *
 	}
 
 	case C4FO_Exclude:
-		return new C4FindObjectExclude(Data[1].getObj());
+	{
+		C4Object *obj = Data[1].getObj();
+		if (!obj) return nullptr;
+
+		return new C4FindObjectExclude(obj);
+	}
 
 	case C4FO_ID:
 		return new C4FindObjectDef(Data[1].getPropList());
@@ -236,7 +241,9 @@ C4FindObject *C4FindObject::CreateByValue(const C4Value &DataVal, C4SortObject *
 		C4String *pStr = Data[1].getStr();
 		if (!pStr) return nullptr;
 		// Construct
-		C4FindObjectProperty *pFO = new C4FindObjectProperty(pStr);
+		C4FindObjectProperty *pFO = Data.GetSize() >= 3
+			? new C4FindObjectProperty(pStr, Data[2])
+			: new C4FindObjectProperty(pStr);
 		// Done
 		return pFO;
 	}
@@ -832,7 +839,7 @@ bool C4FindObjectProperty::Check(C4Object *pObj)
 {
 	assert(Name); // checked in constructor
 	C4Value value;
-	return pObj->GetPropertyByS(Name, &value) && value.getBool();
+	return pObj->GetPropertyByS(Name, &value) && (have_value ? value == Value : value.getBool());
 }
 
 bool C4FindObjectProperty::IsImpossible()

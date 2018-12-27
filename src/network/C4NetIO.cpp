@@ -523,6 +523,11 @@ C4NetIO::HostAddress::AddressFamily C4NetIO::HostAddress::GetFamily() const
 		gen.sa_family == AF_INET6 ? IPv6 : UnknownFamily;
 }
 
+size_t C4NetIO::HostAddress::GetAddrLen() const
+{
+	return GetFamily() == IPv4 ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+}
+
 void C4NetIO::EndpointAddress::SetPort(uint16_t port)
 {
 	switch (gen.sa_family)
@@ -590,7 +595,7 @@ StdStrBuf C4NetIO::HostAddress::ToString(int flags) const
 	}
 
 	char buf[INET6_ADDRSTRLEN];
-	if (getnameinfo(&gen, sizeof(v6), buf, sizeof(buf), nullptr, 0, NI_NUMERICHOST) != 0)
+	if (getnameinfo(&gen, GetAddrLen(), buf, sizeof(buf), nullptr, 0, NI_NUMERICHOST) != 0)
 		return StdStrBuf();
 
 	return StdStrBuf(buf, true);
@@ -1146,20 +1151,77 @@ bool C4NetIOTCP::Execute(int iMaxTime, pollfd *fds) // (mt-safe)
 	return true;
 }
 
-bool C4NetIOTCP::Connect(const C4NetIO::addr_t &addr) // (mt-safe)
+C4NetIOTCP::Socket::~Socket()
+{
+	if (sock != INVALID_SOCKET)
+		closesocket(sock);
+}
+
+C4NetIO::addr_t C4NetIOTCP::Socket::GetAddress()
+{
+	sockaddr_in6 addr;
+	socklen_t address_len = sizeof addr;
+	C4NetIO::addr_t result;
+	if (::getsockname(sock, (sockaddr*) &addr, &address_len) != SOCKET_ERROR)
+	{
+		result.SetAddress((sockaddr*) &addr);
+	}
+	return result;
+}
+
+SOCKET C4NetIOTCP::CreateSocket(addr_t::AddressFamily family)
 {
 	// create new socket
-	SOCKET nsock = ::socket(addr.GetFamily() == HostAddress::IPv6 ? AF_INET6 : AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+	SOCKET nsock = ::socket(family == HostAddress::IPv6 ? AF_INET6 : AF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
 	if (nsock == INVALID_SOCKET)
 	{
 		SetError("socket creation failed", true);
-		return false;
+		return INVALID_SOCKET;
 	}
 
-	if (addr.GetFamily() == HostAddress::IPv6)
+	if (family == HostAddress::IPv6)
 		if (!InitIPv6Socket(nsock))
-			return false;
+		{
+			closesocket(nsock);
+			return INVALID_SOCKET;
+		}
 
+	return nsock;
+}
+
+std::unique_ptr<C4NetIOTCP::Socket> C4NetIOTCP::Bind(const C4NetIO::addr_t &addr) // (mt-safe)
+{
+	SOCKET nsock = CreateSocket(addr.GetFamily());
+	if (nsock == INVALID_SOCKET) return nullptr;
+
+	// bind the socket to the given address
+	if (::bind(nsock, &addr, addr.GetAddrLen()) == SOCKET_ERROR)
+	{
+		SetError("binding the socket failed", true);
+		closesocket(nsock);
+		return nullptr;
+	}
+	return std::unique_ptr<Socket>(new Socket(nsock));
+}
+
+bool C4NetIOTCP::Connect(const addr_t &addr, std::unique_ptr<Socket> socket) // (mt-safe)
+{
+	SOCKET nsock = socket->sock;
+	socket->sock = INVALID_SOCKET;
+	return Connect(addr, nsock);
+}
+
+bool C4NetIOTCP::Connect(const C4NetIO::addr_t &addr) // (mt-safe)
+{
+	// create new socket
+	SOCKET nsock = CreateSocket(addr.GetFamily());
+	if (nsock == INVALID_SOCKET) return false;
+
+	return Connect(addr, nsock);
+}
+
+bool C4NetIOTCP::Connect(const C4NetIO::addr_t &addr, SOCKET nsock) // (mt-safe)
+{
 #ifdef STDSCHEDULER_USE_EVENTS
 	// set event
 	if (::WSAEventSelect(nsock, Event, FD_CONNECT) == SOCKET_ERROR)
@@ -1195,7 +1257,7 @@ bool C4NetIOTCP::Connect(const C4NetIO::addr_t &addr) // (mt-safe)
 #endif
 
 	// connect (async)
-	if (::connect(nsock, &addr, sizeof addr) == SOCKET_ERROR)
+	if (::connect(nsock, &addr, addr.GetAddrLen()) == SOCKET_ERROR)
 	{
 		if (!HaveWouldBlockError()) // expected
 		{
@@ -1368,7 +1430,7 @@ C4NetIOTCP::Peer *C4NetIOTCP::Accept(SOCKET nsock, const addr_t &ConnectAddr) //
 	addr_t caddr = ConnectAddr;
 
 	// accept incoming connection?
-	C4NetIO::addr_t addr; socklen_t iAddrSize = sizeof addr;
+	C4NetIO::addr_t addr; socklen_t iAddrSize = addr.GetAddrLen();
 	if (nsock == INVALID_SOCKET)
 	{
 		// accept from listener
@@ -1497,7 +1559,7 @@ bool C4NetIOTCP::Listen(uint16_t inListenPort)
 	// bind listen socket
 	addr_t addr = addr_t::Any;
 	addr.SetPort(inListenPort);
-	if (::bind(lsock, &addr, sizeof(addr)) == SOCKET_ERROR)
+	if (::bind(lsock, &addr, addr.GetAddrLen()) == SOCKET_ERROR)
 	{
 		SetError("socket bind failed", true);
 		closesocket(lsock); lsock = INVALID_SOCKET;
@@ -2122,7 +2184,7 @@ bool C4NetIOSimpleUDP::Send(const C4NetIOPacket &rPacket)
 	// send it
 	C4NetIO::addr_t addr = rPacket.getAddr();
 	if (::sendto(sock, getBufPtr<char>(rPacket), rPacket.getSize(), 0,
-	             &addr, sizeof(addr))
+	             &addr, addr.GetAddrLen())
 	    != int(rPacket.getSize()) &&
 	    !HaveWouldBlockError())
 	{
@@ -2324,6 +2386,11 @@ struct C4NetIOUDP::BinAddr
 		}
 		result.SetPort(port);
 		return result;
+	}
+
+	StdStrBuf ToString() const
+	{
+		return static_cast<C4NetIO::addr_t>(*this).ToString();
 	}
 
 	uint16_t port;
@@ -3254,6 +3321,7 @@ void C4NetIOUDP::Peer::OnRecv(const C4NetIOPacket &rPacket) // (mt-safe)
 		}
 		// build ConnOk Packet
 		ConnOKPacket nPack;
+		bool fullyConnected = false;
 
 		nPack.StatusByte = IPID_ConnOK; // (always du, no mc experiments here)
 		nPack.Nr = fBroadcasted ? pParent->iOPacketCounter : iOPacketCounter;
@@ -3263,9 +3331,15 @@ void C4NetIOUDP::Peer::OnRecv(const C4NetIOPacket &rPacket) // (mt-safe)
 		else if (pParent->fMultiCast && addr.GetPort() == pParent->iPort)
 			nPack.MCMode = ConnOKPacket::MCM_MC; // du ok, try multicast next
 		else
+		{
 			nPack.MCMode = ConnOKPacket::MCM_NoMC; // du ok
+			// no multicast => we're fully connected now
+			fullyConnected = true;
+		}
 		// send it
 		SendDirect(C4NetIOPacket(&nPack, sizeof(nPack), false, addr));
+		// Clients will try sending data from OnConn, so send ConnOK before that.
+		if (fullyConnected) OnConn();
 	}
 	break;
 

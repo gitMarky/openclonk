@@ -74,11 +74,13 @@ func RemovePlayer(int plr)
 private func TransferInventory(object from, object to)
 {
 	// Drop some items that cannot be transferred (such as connected pipes and dynamite igniters)
-	var i = from->ContentsCount(), contents;
+	var i = from->ContentsCount();
 	while (i--)
-		if (contents = from->Contents(i))
-			if (contents->~IsDroppedOnDeath(from))
-				contents->Exit();
+	{
+		var contents = from->Contents(i);
+		if (contents && contents->~IsDroppedOnDeath(from))
+			contents->Exit();
+	}
 	return to->GrabContents(from);
 }
 
@@ -130,7 +132,7 @@ func FillHomebase(object homebase)
 	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Consumable { item = Firestone, cost = 5});
 	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Weapon     { item = Blunderbuss,    cost = 50, ammo = LeadBullet, desc = "$HomebaseDescBlunderbuss$",     requirements = ["AdvancedWeapons"] });
 	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Consumable { item = IronBomb,  cost = 15,                                             requirements = ["AdvancedWeapons"] });
-	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Consumable { item = DynamiteBox,cost = 15,                                            requirements = ["AdvancedWeapons"] });
+	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Consumable { item = Lantern,cost = 15,                                            requirements = ["AdvancedWeapons"] });
 	homebase->AddHomebaseItem(new Homebase.ITEMTYPE_Weapon     { item = GrenadeLauncher, ammo = IronBomb, desc = "$HomebaseDescGrenadeLauncher$", requirements = ["MasterWeapons"] });
 
 	homebase->AddCaption("$HomebaseItems$");
@@ -161,6 +163,7 @@ func StartGame()
 	}
 	if (g_statue)
 	{
+		g_statue->SetCategory(C4D_Living | C4D_StaticBack);
 		g_statue.Death = Scenario.Statue_Death;
 	}
 	// Launch first wave!
@@ -302,10 +305,13 @@ func OnClonkDeath(clonk, killed_by)
 	{
 		// Enemy clonk death
 		// Remove inventory
-		var i = clonk->ContentsCount(), obj;
-		while (i--) if (obj=clonk->Contents(i))
-			if (!obj->~OnContainerDeath())
+		var i = clonk->ContentsCount();
+		while (i--)
+		{
+			var obj = clonk->Contents(i);
+			if (obj && !obj->~OnContainerDeath())
 				obj->RemoveObject();
+		}
 		// Clear enemies from list
 		i = GetIndexOf(g_spawned_enemies, clonk);
 		if (i>=0)

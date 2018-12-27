@@ -685,7 +685,7 @@ static bool FnGameOver(C4PropList * _this, long iGameOverValue /* provided for f
 	return !!Game.DoGameOver();
 }
 
-static bool FnGainMissionAccess(C4PropList * _this, C4String *szPassword)
+static bool FnGainScenarioAccess(C4PropList * _this, C4String *szPassword)
 {
 	if (std::strlen(Config.General.MissionAccess)+std::strlen(FnStringPar(szPassword))+3>CFG_MaxString) return false;
 	SAddModule(Config.General.MissionAccess,FnStringPar(szPassword));
@@ -1432,14 +1432,14 @@ static long FnSetMaxPlayer(C4PropList * _this, long iTo)
 	return true;
 }
 
-static bool FnGetMissionAccess(C4PropList * _this, C4String *strMissionAccess)
+static bool FnGetScenarioAccess(C4PropList * _this, C4String *strMissionAccess)
 {
 	// safety
 	if (!strMissionAccess) return false;
 
 	// non-sync mode: warn
 	if (::Control.SyncMode())
-		Log("Warning: using GetMissionAccess may cause desyncs when playing records!");
+		Log("Warning: using GetScenarioAccess may cause desyncs when playing records!");
 
 	return SIsModule(Config.General.MissionAccess, FnStringPar(strMissionAccess));
 }
@@ -2172,20 +2172,20 @@ bool SimFlight(C4Real &x, C4Real &y, C4Real &xdir, C4Real &ydir, int32_t iDensit
 
 static C4ValueArray* FnSimFlight(C4PropList * _this, int X, int Y, Nillable<int> pvrXDir, Nillable<int> pvrYDir, Nillable<int> pviDensityMin, Nillable<int> pviDensityMax, Nillable<int> pviIter, int iPrec)
 {
+	if (!iPrec) iPrec = 10;
 	// check and set parameters
 	if (Object(_this))
 	{
 		X += Object(_this)->GetX();
 		Y += Object(_this)->GetY();
 	}
-	int XDir = pvrXDir.IsNil() && Object(_this) ? fixtoi(Object(_this)->xdir) : static_cast<int>(pvrXDir);
-	int YDir = pvrXDir.IsNil() && Object(_this) ? fixtoi(Object(_this)->ydir) : static_cast<int>(pvrYDir);
+	int XDir = pvrXDir.IsNil() && Object(_this) ? fixtoi(Object(_this)->xdir, iPrec) : static_cast<int>(pvrXDir);
+	int YDir = pvrXDir.IsNil() && Object(_this) ? fixtoi(Object(_this)->ydir, iPrec) : static_cast<int>(pvrYDir);
 
 	int iDensityMin = pviDensityMin.IsNil() ? C4M_Solid : static_cast<int>(pviDensityMin);
 	int iDensityMax = pviDensityMax.IsNil() ? 100 : static_cast<int>(pviDensityMax);
 	int iIter = pviIter.IsNil() ? -1 : static_cast<int>(pviIter);
-	if (!iPrec) iPrec = 10;
-
+	
 	// convert to C4Real
 	C4Real x = itofix(X), y = itofix(Y),
 		xdir = itofix(XDir, iPrec), ydir = itofix(YDir, iPrec);
@@ -2549,7 +2549,7 @@ static bool FnPauseGame(C4PropList * _this, bool fToggle)
 	return true;
 }
 
-static bool FnSetNextMission(C4PropList * _this, C4String *szNextMission, C4String *szNextMissionText, C4String *szNextMissionDesc)
+static bool FnSetNextScenario(C4PropList * _this, C4String *szNextMission, C4String *szNextMissionText, C4String *szNextMissionDesc)
 {
 	if (!szNextMission || !szNextMission->GetData().getLength())
 	{
@@ -2861,7 +2861,7 @@ void InitGameFunctionMap(C4AulScriptEngine *pEngine)
 	F(SetPlayerViewLock);
 	F(DoBaseMaterial);
 	F(DoBaseProduction);
-	F(GainMissionAccess);
+	F(GainScenarioAccess);
 	F(IsNetwork);
 	F(IsEditor);
 	F(GetLeague);
@@ -2872,7 +2872,7 @@ void InitGameFunctionMap(C4AulScriptEngine *pEngine)
 	F(SetMaxPlayer);
 	F(Object);
 	F(GetTime);
-	F(GetMissionAccess);
+	F(GetScenarioAccess);
 	F(MaterialName);
 	F(DrawMap);
 	F(DrawDefMap);
@@ -2929,7 +2929,7 @@ void InitGameFunctionMap(C4AulScriptEngine *pEngine)
 	::AddFunc(p, "PauseGame", FnPauseGame, false);
 	F(PathFree);
 	F(PathFree2);
-	F(SetNextMission);
+	F(SetNextScenario);
 	F(GetPlayerControlState);
 	F(SetPlayerControlEnabled);
 	F(GetPlayerControlEnabled);

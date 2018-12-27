@@ -38,6 +38,8 @@ func Initialize()
 	npc_newton->SetAlternativeSkin("MaleBlackHair");
 	npc_pyrit->SetAlternativeSkin("MaleBrownHair");
 	npc_woody->SetAlternativeSkin("Youngster");
+	g_guidepost1->SetInscription("$Post1$");
+	g_guidepost2->SetInscription("$Post2$");
 	MakeRuinsOnDamage(); // see System.ocg/Ruins.c
 	PlaceGrass(40);
 	return true;
@@ -126,8 +128,8 @@ func OnPlaneLoaded(object plane, object oil)
 
 func OnGoalsFulfilled()
 {
-	SetNextMission("Missions.ocf/Crash.ocs");
-	GainMissionAccess("S2Raid");
+	SetNextScenario("Missions.ocf/Crash.ocs");
+	GainScenarioAccess("S2Raid");
 	GainScenarioAchievement("Done");
 	return true; // GameOver done by outro
 }

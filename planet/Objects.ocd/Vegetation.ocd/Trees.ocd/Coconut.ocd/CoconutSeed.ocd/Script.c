@@ -17,7 +17,7 @@ private func GetHangingTime() { return 4200; }
 
 public func AttachToTree(object tree)
 {
-	SetCategory(GetCategory() | C4D_StaticBack);
+	SetCategory((GetCategory() | C4D_StaticBack) & (~C4D_Object));
 	mother = tree;
 	ScheduleCall(this, "DetachFromTree", 4200 + Random(500));
 }
@@ -25,7 +25,8 @@ public func AttachToTree(object tree)
 public func DetachFromTree(bool no_bounce)
 {
 	ClearScheduleCall(this, "DetachFromTree");
-	SetCategory(GetCategory() ^ C4D_StaticBack);
+	SetCategory((GetCategory() | C4D_Object) & (~C4D_StaticBack));
+	SetYDir(0);
 	SetXDir(Random(3)-1);
 	if (mother) mother->LostCoconut();
 	mother = nil;
@@ -52,8 +53,9 @@ public func Sprout()
 	// No duplicate sprout
 	if (GetEffect("IntGerminate", this)) return false;
 	// Try to sprout a coconut tree.
-	var d = 8, tree;
-	if (tree = PlaceVegetation(Tree_Coconut, -d/2, -d/2, d, d, 100))
+	var d = 8;
+	var tree = PlaceVegetation(Tree_Coconut, -d/2, -d/2, d, d, 100);
+	if (tree)
 	{
 		tree->InitChild(this);
 		this.Collectible = 0;

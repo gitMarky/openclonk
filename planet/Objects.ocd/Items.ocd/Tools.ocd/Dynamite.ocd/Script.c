@@ -84,16 +84,6 @@ public func OnFuseFinished(object fuse)
 	DoExplode();
 }
 
-// This will only when inside a dynamite box to display the remaining dynamite sticks in the HUD
-public func GetStackCount()
-{
-	if (Contained())
-		if (Contained()->GetID() == DynamiteBox)
-		{
-			return Contained()->ContentsCount(GetID());
-		}
-}
-
 public func IsInfiniteStackCount()
 {
 	return false;
@@ -189,7 +179,6 @@ func Place(object clonk, int x, int y, bool box)
 // and puts the offset to the wall into "xo, yo" - looking from the clonk
 func GetWall(int angle)
 {
-	var dist = 12;
 	for (var dist = 12; dist < 18; dist++)
 	{
 		var x = Sin(angle, dist);

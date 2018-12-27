@@ -17,6 +17,8 @@
 
 /* Helper classes for individual sounds and effects in sound system. */
 
+#ifndef INC_C4SoundInstance
+#define INC_C4SoundInstance
 #include "platform/C4SoundSystem.h"
 
 class C4Object; 
@@ -92,7 +94,7 @@ public:
 	void SetVolume(int32_t inVolume) { iVolume = inVolume; }
 	void SetPan(int32_t inPan) { iPan = inPan; }
 	void SetPitch(int32_t inPitch);
-	void SetVolumeByPos(int32_t x, int32_t y);
+	void SetVolumeByPos(int32_t x, int32_t y, int32_t relative_volume = 100);
 	void SetObj(C4Object *pnObj) { pObj = pnObj; }
 	void ClearPointers(C4Object *pObj);
 	bool Inside(int32_t iX, int32_t iY, int32_t iRad);
@@ -101,3 +103,4 @@ public:
 	void SetPlayer(int32_t new_player);
 };
 
+#endif

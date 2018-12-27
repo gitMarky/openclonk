@@ -218,10 +218,13 @@ global func FxGrowGemStalactitesTimer(object target, proplist effect, int time)
 		if (y <= pos.y - 5)
 			continue;
 		
-		// Check for other stalactites and crew members.
-		var dist = 300;		
+		// Check for other stalactites, crew members, and vehicle material (wooden bridges, etc.). The new stalactite should not be too close to either 
+		var dist = 300;
+		var vehicle_dist = 30;
+		if (!!FindLocation(Loc_Or(Loc_Material("Vehicle")), Loc_InRect(pos.x - vehicle_dist, pos.y - vehicle_dist, 2 * vehicle_dist, 2 * vehicle_dist)))
+			continue;
 		if (!!FindLocation(Loc_Or(Loc_Material("Ruby"), Loc_Material("Amethyst")), Loc_InRect(pos.x - dist, pos.y - dist, 2 * dist, 2 * dist)))
-			continue;		
+			continue;
 		if (!!FindObject(Find_OCF(OCF_CrewMember), Find_Distance(dist, pos.x, pos.y)))
 			continue;
 
@@ -331,10 +334,11 @@ private func FindMainIslandPosition(int xpos, int sep, bool no_struct)
 	var wdt = LandscapeWidth();
 	var hgt = LandscapeHeight();
 
+	var x, y;
 	for (var i = 0; i < 100; i++)
 	{
-		var x = RandomX(wdt / 2 + xpos - sep, wdt / 2 + xpos + sep);
-		var y = hgt / 2 - 220;
+		x = RandomX(wdt / 2 + xpos - sep, wdt / 2 + xpos + sep);
+		y = hgt / 2 - 220;
 		
 		while (!GBackSolid(x, y) && y < 3 * hgt / 4)
 			y++;	

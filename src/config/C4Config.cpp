@@ -270,6 +270,8 @@ void C4ConfigControls::CompileFunc(StdCompiler *pComp)
 #endif
 }
 
+#undef s
+
 C4Config::C4Config()
 {
 	Default();
@@ -443,9 +445,9 @@ void C4ConfigGeneral::DeterminePaths()
 	GetTempPathW(CFG_MaxString,apath);
 	TempPath = StdStrBuf(apath);
 	if (TempPath[0]) TempPath.AppendBackslash();
-#elif defined(__linux__)
+#elif defined(PROC_SELF_EXE)
 	ExePath.SetLength(1024);
-	ssize_t l = readlink("/proc/self/exe", ExePath.getMData(), 1024);
+	ssize_t l = readlink(PROC_SELF_EXE, ExePath.getMData(), 1024);
 	if (l < -1)
 	{
 		ExePath.Ref(".");
@@ -477,6 +479,10 @@ void C4ConfigGeneral::DeterminePaths()
 	SCopy(ExePath.getMData(),SystemDataPath);
 #elif defined(__APPLE__)
 	SCopy(::Application.GetGameDataPath().c_str(),SystemDataPath);
+#elif defined(WITH_APPDIR_INSTALLATION)
+	// AppDir: layout like normal unix installation, but relative to executable.
+	auto str = FormatString("%s%s", ExePath.getMData(), OC_SYSTEM_DATA_DIR);
+	SCopy(str.getMData(), SystemDataPath);
 #elif defined(WITH_AUTOMATIC_UPDATE)
 	// WITH_AUTOMATIC_UPDATE builds are our tarball releases and
 	// development snapshots, i.e. where the game data is at the

@@ -271,15 +271,17 @@ public func PlayAnimation(string animation, int index, array position, array wei
 
 public func GetAnimationLength(string animation)
 {
-	var replacement;
-	if(PropAnimations != nil)
-		if(replacement = GetProperty(animation, PropAnimations))
+	if (PropAnimations != nil)
+	{
+		var replacement = GetProperty(animation, PropAnimations);
+		if (replacement)
 		{
 			if(GetType(replacement) == C4V_Array)
 				animation = replacement[0];
 			else
 				animation = replacement;
 		}
+	}
 	return inherited(animation, ...);
 }
 
@@ -411,16 +413,18 @@ func Footstep()
 	}
 }
 
-
-func GetWalkAnimationPosition(string anim, int pos)
+// Returns an animation position (Anim_* function) for new_anim depending on the position of the current animation
+// for smoother transitions. Does not work with replaced animations.
+func GetWalkAnimationPosition(string new_anim, int current_pos, string current_anim)
 {
 	var dir = -1;
 	if(GetDirection() == COMD_Right) dir = +1;
 	if(PropAnimations != nil)
-		if(GetProperty(Format("%s_Position", anim), PropAnimations))
+		if(GetProperty(Format("%s_Position", new_anim), PropAnimations))
 		{
-			var length = GetAnimationLength(anim), replacement;
-			if(replacement = GetProperty(anim, PropAnimations))
+			var length = GetAnimationLength(new_anim);
+			var replacement = GetProperty(new_anim, PropAnimations);
+			if (replacement)
 			{
 				// at this point /replacement/ may contain an array of two animations that signal a merge
 				// in that case, just take the first one..
@@ -428,25 +432,62 @@ func GetWalkAnimationPosition(string anim, int pos)
 					replacement = replacement[0];
 				length = GetAnimationLength(replacement);
 			}
-			return Anim_X(pos, 0, length, GetProperty(Format("%s_Position", anim), PropAnimations)*dir);
+			return Anim_X(0, 0, length, GetProperty(Format("%s_Position", new_anim), PropAnimations)*dir);
 		}
-	// TODO: Choose proper starting positions, depending on the current
-	// animation and its position: For Stand->Walk or Stand->Run, start
-	// with a frame where one of the clonk's feets is on the ground and
-	// the other one is in the air. For Walk->Run and Run->Walk, fade to
-	// a state where its feets are at a similar position (just taking
-	// over previous animation's position might work, using
-	// GetAnimationPosition()). Walk->Stand is arbitrary I guess.
-	// First parameter of Anim_Linear/Anim_AbsX is initial position.
-	// Movement synchronization might also be tweaked somewhat as well.
-	if(anim == Clonk_WalkInside)
+
+	// Inside a container the position is always 0.
+	if(new_anim == Clonk_WalkInside)
 		return Anim_Const(0);
-	if(anim == Clonk_WalkStand)
-		return Anim_Linear(pos, 0, GetAnimationLength(anim), 35, ANIM_Loop);
-	else if(anim == Clonk_WalkWalk)
-		return Anim_X(pos, 0, GetAnimationLength(anim), 20*dir);
-	else if(anim == Clonk_WalkRun)
-		return Anim_X(pos, 0, GetAnimationLength(anim), 50*dir);
+	// Transitions into stand are always arbitrary. A nice transition is possible but is probably
+	// too much of a hassle for such a small effect and has nothing to do with the position of the
+	// Stand animation.
+	if(new_anim == Clonk_WalkStand)
+		return Anim_Linear(0, 0, GetAnimationLength(new_anim), 35, ANIM_Loop);
+	// Transition into the Walk animation
+	else if(new_anim == Clonk_WalkWalk)
+	{
+		// Transition from Inside or Stand:
+		// Start on a position where one foot is on the ground (the foreground one) and in the center
+		if (current_anim == Clonk_WalkInside || current_anim == Clonk_WalkStand)
+		{
+			var pos = 720;
+			if (dir == -1)
+				pos = 1896;
+			return Anim_X(pos, 0, GetAnimationLength(new_anim), 20*dir);
+		}
+		// Transition from run: position + 1200
+		if (current_anim == Clonk_WalkRun)
+		{
+			var pos = current_pos + 1200;
+			if (pos > 2400)
+				pos -= 2400;
+			return Anim_X(pos, 0, GetAnimationLength(new_anim), 20*dir);
+		}
+		if (current_anim == Clonk_WalkWalk) // why is this called?
+			return Anim_X(current_pos, 0, GetAnimationLength(new_anim), 20*dir);
+	}
+	else if(new_anim == Clonk_WalkRun)
+	{
+		// Transition from Inside or Stand:
+		// Start on a position where one foot is on the ground (the foreground one) and in the center
+		if (current_anim == Clonk_WalkInside || current_anim == Clonk_WalkStand)
+		{
+			var pos = 1824;
+			if (dir == -1)
+				pos = 600;
+			return Anim_X(pos, 0, GetAnimationLength(new_anim), 50*dir);
+		}
+		// Transition from walk: position + 1200
+		if (current_anim == Clonk_WalkWalk)
+		{
+			var pos = current_pos + 1200;
+			if (pos > 2400)
+				pos -= 2400;
+			return Anim_X(pos, 0, GetAnimationLength(new_anim), 50*dir);
+		}
+		if (current_anim == Clonk_WalkRun) // why is this called?
+			return Anim_X(current_pos, 0, GetAnimationLength(new_anim), 50*dir);
+	}
 }
 
 func FxIntWalkStart(pTarget, effect, fTmp)
@@ -493,7 +534,7 @@ func FxIntWalkTimer(pTarget, effect)
 	{
 		effect.animation_name = anim;
 		effect.idle_time = 0;
-		effect.animation_id = PlayAnimation(anim, CLONK_ANIM_SLOT_Movement, GetWalkAnimationPosition(anim, 0), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
+		effect.animation_id = PlayAnimation(anim, CLONK_ANIM_SLOT_Movement, GetWalkAnimationPosition(anim, GetAnimationPosition(effect.animation_id), effect.animation_name), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
 	}
 	// The clonk has to stand, not making a pause animation yet and not doing other actions with the hands (e.g. loading the bow)
 	else if(anim == Clonk_WalkStand && !GetHandAction() && GetMenu() == nil)
@@ -631,8 +672,6 @@ func FxIntScaleTimer(target, number, time)
 		}
 		this.dist = dist;
 		SetAnimationPosition(number.animation_id, Anim_Const(GetAnimationLength("ScaleTop")*dist/800));
-		// The animation's graphics has to be shifet a bit to adjust to the clonk movement
-		var pos = GetAnimationPosition(number.animation_id);
 		SetScaleRotation(0, 0, 0, 0, 0, true);
 		// Check if corner scale help is needed
 		if (CheckScaleTopHelper())
@@ -779,10 +818,12 @@ func StartJump()
 	//Dive jump (only if not aiming)
 	if(!this->~IsAiming())
 	{
-		var flight = SimFlight(AbsX(GetX()), AbsY(GetY()), GetXDir()*2, GetYDir()*2, 25); //I have no clue why the dirs must be doubled... but it seems to fix it
-		if(GBackLiquid(flight[0] - GetX(), flight[1] - GetY()) && GBackLiquid(flight[0] - GetX(), flight[1] + GetDefHeight() / 2 - GetY()))
+		var flight = SimFlight(0, GetBottom(), nil, nil, C4M_Liquid);
+		if (GBackLiquid(flight[0] - GetX(), flight[1] - GetY()) && GBackLiquid(flight[0] - GetX(), flight[1] + GetBottom() - GetY()))
 		{
 			PlayAnimation("JumpDive", CLONK_ANIM_SLOT_Movement, Anim_Linear(0, 0, GetAnimationLength("JumpDive"), 60, ANIM_Hold), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
+			if(!GetEffect("IntDiveJump", this))
+				AddEffect("IntDiveJump", this, 1, 1, this);
 			return 1;
 		}
 	}
@@ -1027,10 +1068,13 @@ protected func FxIntDelayedVertexTimer(object target, proplist effect, int time)
 func FxIntSwimStart(pTarget, effect, fTmp)
 {
 	if(fTmp) return;
+	var enter_diving = GetEffect("IntDiveJump", this);
 
 	effect.animation_name = "SwimStand";
-	effect.animation = PlayAnimation("SwimStand", CLONK_ANIM_SLOT_Movement, Anim_Linear(0, 0, GetAnimationLength("SwimStand"), 20, ANIM_Loop), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
-
+	if (!enter_diving)
+	{
+		effect.animation = PlayAnimation("SwimStand", CLONK_ANIM_SLOT_Movement, Anim_Linear(0, 0, GetAnimationLength("SwimStand"), 20, ANIM_Loop), Anim_Linear(0, 0, 1000, 5, ANIM_Remove));
+	}
 	// Set proper turn type
 	SetTurnType(0);
 	// Update carried items
@@ -1041,59 +1085,65 @@ func FxIntSwimTimer(pTarget, effect, iTime)
 {
 	var iSpeed = Distance(0,0,GetXDir(),GetYDir());
 	SetMeshTransformation(nil, CLONK_MESH_TRANSFORM_SLOT_Translation_Dive);
+	
+	var is_at_surface = !GBackSemiSolid(0, -5);
+	var enter_diving = GetEffect("IntDiveJump", this);
 
 	// TODO: Smaller transition time between dive<->swim, keep 15 for swimstand<->swim/swimstand<->dive
 
-	// Play stand animation when not moving
-	if(Abs(GetXDir()) < 1 && !GBackSemiSolid(0, -5))
+	if (is_at_surface && !enter_diving)
 	{
-		if (GetContact(-1) & CNAT_Bottom)
+		// Play stand animation when not moving
+		if(Abs(GetXDir()) < 1)
 		{
-			SetAction("Walk");
-			return -1;
-		}
-		if(effect.animation_name != "SwimStand")
-		{
-			effect.animation_name = "SwimStand";
-			effect.animation = PlayAnimation("SwimStand", CLONK_ANIM_SLOT_Movement, Anim_Linear(0, 0, GetAnimationLength("SwimStand"), 20, ANIM_Loop), Anim_Linear(0, 0, 1000, 15, ANIM_Remove));
-		}
-	}
-	// Swimming
-	else if(!GBackSemiSolid(0, -5))
-	{
-		if (GBackLiquid()) // re-check water background before effects to prevent waves in wrong color
-		{
-			var percent = GetAnimationPosition(GetRootAnimation(5)) * 200 / GetAnimationLength("Swim");
-			percent = (percent % 100);
-			if (percent < 40)
+			if (GetContact(-1) & CNAT_Bottom)
 			{
-				if (iTime % 5 == 0)
-				{
-					var phases = PV_Linear(0, 7);
-					if (GetDir() == 1) phases = PV_Linear(8, 15);
-					var color = GetAverageTextureColor(GetTexture(0, 0));
-					var particles =
-					{
-						Size = 16,
-						Phase = phases,
-						CollisionVertex = 750,
-						OnCollision = PC_Die(),
-						R = (color >> 16) & 0xff,
-						G = (color >> 8) & 0xff,
-						B = (color >> 0) & 0xff,
-						Attach = ATTACH_Front,
-					};
-					CreateParticle("Wave", 0, -4, (RandomX(-5, 5) - (-1 + 2 * GetDir()) * 4) / 4, 0, 16, particles);
-				}
-				Sound("Liquids::Swim?");
+				SetAction("Walk");
+				return -1;
+			}
+			if(effect.animation_name != "SwimStand")
+			{
+				effect.animation_name = "SwimStand";
+				effect.animation = PlayAnimation("SwimStand", CLONK_ANIM_SLOT_Movement, Anim_Linear(0, 0, GetAnimationLength("SwimStand"), 20, ANIM_Loop), Anim_Linear(0, 0, 1000, 15, ANIM_Remove));
 			}
 		}
-		// Animation speed by X
-		if(effect.animation_name != "Swim")
+		// Swimming
+		else
 		{
-			effect.animation_name = "Swim";
-			// TODO: Determine starting position from previous animation
-			PlayAnimation("Swim", CLONK_ANIM_SLOT_Movement, Anim_AbsX(0, 0, GetAnimationLength("Swim"), 25), Anim_Linear(0, 0, 1000, 15, ANIM_Remove));
+			if (GBackLiquid()) // re-check water background before effects to prevent waves in wrong color
+			{
+				var percent = GetAnimationPosition(GetRootAnimation(5)) * 200 / GetAnimationLength("Swim");
+				percent = (percent % 100);
+				if (percent < 40)
+				{
+					if (iTime % 5 == 0)
+					{
+						var phases = PV_Linear(0, 7);
+						if (GetDir() == 1) phases = PV_Linear(8, 15);
+						var color = GetAverageTextureColor(GetTexture(0, 0));
+						var particles =
+						{
+							Size = 16,
+							Phase = phases,
+							CollisionVertex = 750,
+							OnCollision = PC_Die(),
+							R = (color >> 16) & 0xff,
+							G = (color >> 8) & 0xff,
+							B = (color >> 0) & 0xff,
+							Attach = ATTACH_Front,
+						};
+						CreateParticle("Wave", 0, -4, (RandomX(-5, 5) - (-1 + 2 * GetDir()) * 4) / 4, 0, 16, particles);
+					}
+					Sound("Liquids::Swim?");
+				}
+			}
+			// Animation speed by X
+			if(effect.animation_name != "Swim")
+			{
+				effect.animation_name = "Swim";
+				// TODO: Determine starting position from previous animation
+				PlayAnimation("Swim", CLONK_ANIM_SLOT_Movement, Anim_AbsX(0, 0, GetAnimationLength("Swim"), 25), Anim_Linear(0, 0, 1000, 15, ANIM_Remove));
+			}
 		}
 	}
 	// Diving
@@ -1117,6 +1167,11 @@ func FxIntSwimTimer(pTarget, effect, iTime)
 		{
 			var iRot = Angle(-Abs(GetXDir()), GetYDir());
 			effect.rot += BoundBy(iRot - effect.rot, -4, 4);
+		}
+		
+		if (enter_diving)
+		{
+			effect.rot = Max(0, 180 - enter_diving.rot);
 		}
 
 		// TODO: Shouldn't weight go by sin^2 or cos^2 instead of linear in angle?
@@ -1142,6 +1197,28 @@ func GetSwimRotation()
 	var effect = GetEffect("IntSwim", this);
 	if(!effect) return 0;
 	return effect.rot*(-1+2*(GetDirection()==COMD_Right));
+}
+
+func FxIntDiveJumpTimer(pTarget, effect, iTime)
+{
+	if (GetAction() == "Jump") // Calculate the diving entry angle
+	{
+		effect.rot = BoundBy(150 * GetActTime() / 32, 0, 150);
+		return FX_OK;
+	}
+	else if (GetAction() == "Swim") // Diving already?
+	{
+		var idle = 0 == GetComDir();
+		if (idle && GetSpeed() < 10) // Swim upwards again without player interaction
+		{
+			SetComDir(COMD_Up);
+		}
+		if (idle || GetActTime() < 2) // Leave at least two frames, so that the dive animation can get the correct angle
+		{
+			return FX_OK;
+		}
+	}
+	return FX_Execute_Kill;
 }
 
 /*--

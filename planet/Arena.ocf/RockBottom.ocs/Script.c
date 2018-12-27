@@ -35,9 +35,9 @@ protected func Initialize()
 	
 	var waterfall;
 	waterfall = CreateWaterfall(130, 53, 2, "Water");
-	waterfall->SetDirection(4, 0, 3, 6);
+	waterfall->SetDirection(6, 3, 2, 3);
 	waterfall = CreateWaterfall(144, 50, 8, "Water");
-	waterfall->SetDirection(6, 0, 5, 6);
+	waterfall->SetDirection(9, 3, 3, 3);
 	CreateLiquidDrain(100, 315, 10);
 	CreateLiquidDrain(130, 315, 10);
 	CreateLiquidDrain(160, 315, 10);
@@ -119,6 +119,12 @@ global func CreateChestContents(id obj_id)
 }
 
 // GameCall from RelaunchContainer.
+public func OnClonkEnteredRelaunch(object clonk)
+{
+	clonk->CreateContents(Sword);
+}
+
+// GameCall from RelaunchContainer.
 public func OnClonkLeftRelaunch(object clonk)
 {
 	clonk->SetPosition(RandomX(120, 160), -20);
@@ -132,4 +138,4 @@ public func RelaunchPosition()
 }
 
 public func KillsToRelaunch() { return 0; }
-public func RelaunchWeaponList() { return [Bow, Shield, Sword, Firestone, Dynamite, Javelin, Blunderbuss]; }
+public func RelaunchWeaponList() { return [Bow, Shield, Firestone, Dynamite, Javelin, Blunderbuss]; }

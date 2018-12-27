@@ -190,7 +190,7 @@ private func SetNextInteraction(proplist to)
 		RemoveEffect(nil, this, e);
 	// And set & mark new one.
 	this.control.interaction_hud_controller->SetCurrentInteraction(to);
-	var interaction_cnt = GetLength(GetInteractableObjects());
+	var interaction_cnt = GetInteractableObjectsCount();
 	if (to)
 		AddEffect("IntHighlightInteraction", this, 1, 2, this, nil, to, interaction_cnt);
 }
@@ -378,8 +378,8 @@ func GetInteractableObjects(array sort)
 	// Make sure that the Clonk's action target is always shown.
 	// You can push a lorry out of your bounding box and would, otherwise, then be unable to release it.
 	var main_criterion = Find_AtRect(-5, -10, 10, 20);
-	var action_target = nil;
-	if (action_target = GetActionTarget())
+	var action_target = GetActionTarget();
+	if (action_target)
 	{
 		main_criterion = Find_Or(main_criterion, Find_InArray([action_target]));
 	}
@@ -435,10 +435,11 @@ func GetInteractableObjects(array sort)
 		}
 		
 		// Can be entered or exited?
-		var can_be_exited = interactable == Contained();
-		var can_be_entered = interactable->GetOCF() & OCF_Entrance;
+		var has_entrance = interactable->GetOCF() & OCF_Entrance;
+		var can_be_exited = has_entrance && uses_container;
 		// Check if object shape overlaps with entrance area.
-		if (can_be_entered)
+		var can_be_entered = false;
+		if (has_entrance)
 		{
 			var entrance = interactable->GetEntranceRectangle();
 			var shape = GetShape();
@@ -447,8 +448,13 @@ func GetInteractableObjects(array sort)
 			var overlap = Shape->Intersect(entrance, shape);
 			// Interactable can be entered if the area of overlap is bigger than zero.
 			can_be_entered = overlap->GetArea() > 0;
-		}	
-		if (can_be_entered && (!can_only_use_container || can_be_exited))
+			// Interactable can be entered if you are pushing a vehcile and the object is a container, see issue #1969
+			if (GetProcedure() == "PUSH")
+			{
+				can_be_entered &= (interactable->~IsContainer() || interactable->~AllowsVehicleEntrance());
+			}
+		}
+		if (has_entrance && ((can_be_entered && !can_only_use_container) || can_be_exited))
 		{
 			var priority = 29;
 			if (can_be_exited)
@@ -465,6 +471,17 @@ func GetInteractableObjects(array sort)
 	}
 	
 	return possible_interactions;
+}
+
+// Returns the number of interactable objects, which is different from the total number of available interactions.
+private func GetInteractableObjectsCount()
+{
+	var interactions = GetInteractableObjects();
+	var interaction_objects = [];
+	for (var interaction in interactions)
+		PushBack(interaction_objects, interaction.interaction_object);
+	RemoveDuplicates(interaction_objects);
+	return GetLength(interaction_objects);
 }
 
 // executes interaction with an object. /action_info/ is a proplist as returned by GetInteractableObjects

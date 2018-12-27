@@ -1,13 +1,13 @@
 [Head]
 Title=HotIce
-Version=6,0
+Version=8,0
 MinPlayer=2
 MaxPlayer=20
 Icon=21
 
 [Game]
 Mode=Melee
-Goals=Goal_Melee=1;
+Goals=Goal_MultiRoundMelee=1;
 Rules=Rule_KillLogs=1;Rule_Gravestones=1;
 
 [Landscape]
