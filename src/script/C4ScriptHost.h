@@ -44,8 +44,7 @@ public:
 	virtual bool Delete() { return false; } // do NOT delete this - it's just a class member!
 
 	void Clear();
-	virtual bool Load(C4Group &hGroup, const char *szFilename,
-	          const char *szLanguage, C4LangStringTable *pLocalTable);
+	virtual bool Load(C4Group &hGroup, const char *szFilename, const char *szLanguage, C4LangStringTable *pLocalTable);
 	virtual bool LoadData(const char *szFilename, const char *szData, class C4LangStringTable *pLocalTable);
 	void Reg2List(C4AulScriptEngine *pEngine); // reg to linked list
 	virtual C4PropListStatic * GetPropList() { return nullptr; }
@@ -68,6 +67,7 @@ protected:
 	bool Preparse(); // preparse script; return if successfull
 	virtual bool Parse(); // parse preparsed script; return if successfull
 	virtual void UnLink(); // reset to unlinked state
+	bool BaseLoad(C4Group &hGroup, const char *szFilename, const char *szLanguage, C4LangStringTable *pLocalTable);
 
 	void UnlinkOwnedFunctions();
 	void DeleteOwnedPropLists();
@@ -113,6 +113,7 @@ protected:
 private:
 	std::map<const char*, std::bitset<(size_t)C4AulWarningId::WarningCount>> enabledWarnings;
 	std::unique_ptr<::aul::ast::Script> ast;
+	void UpdateStringTable(class C4LangStringTable *pLocalTable);
 };
 
 // script host for System.ocg scripts and scenario section Objects.c
@@ -144,6 +145,8 @@ public:
 	void SetDef(C4Def *to_def) { Def=to_def; }
 	bool Parse() override;
 	C4PropListStatic * GetPropList() override;
+	bool Load(C4Group &hGroup, const char *szFilename, const char *szLanguage, C4LangStringTable *pLocalTable) override;
+	void FinishLoad(); // Finish loading the script by setting the file path and calling MakeScript
 protected:
 	C4Def *Def{nullptr}; // owning def file
 };

@@ -159,18 +159,18 @@ void C4ScriptHost::Reg2List(C4AulScriptEngine *pEngine)
 	Next = nullptr;
 }
 
+bool C4ScriptHost::BaseLoad(C4Group &hGroup, const char *szFilename, const char *szLanguage, class C4LangStringTable *pLocalTable)
+{
+	bool fSuccess = C4ComponentHost::Load(hGroup,szFilename,szLanguage);
+	UpdateStringTable(pLocalTable);
+	return fSuccess;
+}
+
 bool C4ScriptHost::Load(C4Group &hGroup, const char *szFilename,
                         const char *szLanguage, class C4LangStringTable *pLocalTable)
 {
 	// Base load
-	bool fSuccess = C4ComponentHost::Load(hGroup,szFilename,szLanguage);
-	// String Table
-	if (stringTable != pLocalTable)
-	{
-		if (stringTable) stringTable->DelRef();
-		stringTable = pLocalTable;
-		if (stringTable) stringTable->AddRef();
-	}
+	bool fSuccess = BaseLoad(hGroup, szFilename, szLanguage, pLocalTable);
 	// set name
 	ScriptName.Ref(GetFilePath());
 	// preparse script
@@ -188,6 +188,7 @@ bool C4ScriptHost::LoadData(const char *szFilename, const char *szData, class C4
 		stringTable = pLocalTable;
 		if (stringTable) stringTable->AddRef();
 	}
+	UpdateStringTable(pLocalTable);
 	ScriptName.Copy(szFilename);
 
 	StdStrBuf tempScript;
@@ -242,6 +243,18 @@ std::string C4ScriptHost::Translate(const std::string &text) const
 	if (stringTable)
 		return stringTable->Translate(text);
 	throw C4LangStringTable::NoSuchTranslation(text);
+}
+
+void C4ScriptHost::UpdateStringTable(class C4LangStringTable *pLocalTable)
+{
+	// String Table
+	if (stringTable != pLocalTable)
+	{
+		LogF("     Replaced string table");
+		if (stringTable) stringTable->DelRef();
+		stringTable = pLocalTable;
+		if (stringTable) stringTable->AddRef();
+	}
 }
 
 /*--- C4ExtraScriptHost ---*/
@@ -317,6 +330,20 @@ bool C4DefScriptHost::Parse()
 		Def->SetProperty(P_Plane, C4VInt(1));
 	}
 	return r;
+}
+
+bool C4DefScriptHost::Load(C4Group &hGroup, const char *szFilename, const char *szLanguage, class C4LangStringTable *pLocalTable)
+{
+	// Just load, do not make the script yet
+	return BaseLoad(hGroup, szFilename, szLanguage, pLocalTable);
+}
+
+void C4DefScriptHost::FinishLoad()
+{
+	// set name
+	ScriptName.Ref(GetFilePath());
+	// preparse script
+	MakeScript();
 }
 
 C4PropListStatic * C4DefScriptHost::GetPropList() { return Def; }

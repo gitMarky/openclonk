@@ -532,7 +532,21 @@ void C4Def::LoadScript(C4Group &hGroup, const char* szLanguage)
 	// reg script to engine
 	Script.Reg2List(&::ScriptEngine);
 	// Load script
-	Script.Load(hGroup, C4CFN_Script, szLanguage, &StringTable);
+	//Script.Load(hGroup, C4CFN_Script, szLanguage, &StringTable);
+	// Load all scripts in there
+	char filename[_MAX_FNAME + 1] = { 0 };
+	hGroup.ResetSearch();
+	while (hGroup.FindNextEntry(C4CFN_ScriptFiles, filename, nullptr, !!filename[0]))
+	{
+		Script.Load(hGroup, filename, szLanguage, &StringTable);
+		LogF("     Loaded additional script %s", filename);
+		//throw C4AulExecError(filename);
+		//host will be destroyed by script engine, so drop the references
+		C4ScriptHost *scr = new C4ExtraScriptHost();
+		scr->Reg2List(&::ScriptEngine);
+		scr->Load(hGroup, filename, szLanguage, &StringTable);
+	}
+	Script.FinishLoad();
 }
 
 void C4Def::LoadClonkNames(C4Group &hGroup, C4ComponentHost* pClonkNames, const char* szLanguage)
