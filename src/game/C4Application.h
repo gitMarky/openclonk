@@ -54,18 +54,18 @@ public:
 	// System.ocg helper funcs
 	bool OpenSystemGroup() { return SystemGroup.IsOpen() || SystemGroup.Open(C4CFN_System); }
 	void CloseSystemGroup() { SystemGroup.Close(); }
-	void SetGameTickDelay(int iDelay);
-	void OnResolutionChanged(unsigned int iXRes, unsigned int iYRes) override;
+	void SetGameTickDelay(int delay);
+	void OnResolutionChanged(unsigned int res_x, unsigned int res_y) override;
 	void OnKeyboardLayoutChanged() override;
-	bool SetGameFont(const char *szFontFace, int32_t iFontSize);
+	bool SetGameFont(const char *font_face, int32_t font_size);
 	void NextTick();
 
 	void Quit() override;
 	void OpenGame(const char * scenario = nullptr); // start game in the next main loop round
 	void QuitGame(); // quit game, and application if in fullscreen without startup
 	void Activate(); // activate app to gain full focus in OS
-	void SetNextMission(const char *szMissionFilename);
-	void OnCommand(const char *szCmd) override;
+	void SetNextMission(const char *mission_filename);
+	void OnCommand(const char *command_name) override;
 
 	bool IsQuittingGame() const { return AppState >= C4AS_AfterGame; }
 
@@ -90,7 +90,7 @@ protected:
 	bool DoInit(int argc, char * argv[]) override;
 	void ParseCommandLine(int argc, char * argv[]);
 	bool PreInit();
-	static bool ProcessCallback(const char *szMessage, int iProcess);
+	static bool ProcessCallback(const char *message, int process);
 	void ApplyResolutionConstraints();
 
 	// set by ParseCommandLine, if neither editor, scenario nor direct join adress has been specified
@@ -115,9 +115,9 @@ private:
 	unsigned int iGameTickDelay{28};
 	unsigned int iExtraGameTickDelay{0};
 public:
-	void SetGameTickDelay(uint32_t iDelay);
+	void SetGameTickDelay(uint32_t delay);
 
-	bool Execute(int iTimeout, pollfd *) override;
+	bool Execute(int timeout, pollfd *) override;
 	bool IsLowPriority() override;
 };
 

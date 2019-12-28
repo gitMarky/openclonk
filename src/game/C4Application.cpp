@@ -566,9 +566,9 @@ bool C4Application::PreInit()
 	return true;
 }
 
-bool C4Application::ProcessCallback(const char *szMessage, int iProcess)
+bool C4Application::ProcessCallback(const char *message, int process)
 {
-	Console.Out(szMessage);
+	Console.Out(message);
 	return true;
 }
 
@@ -744,24 +744,27 @@ void C4Application::Draw()
 		Console.Execute();
 }
 
-void C4Application::SetGameTickDelay(int iDelay)
+void C4Application::SetGameTickDelay(int delay)
 {
-	if (!pGameTimer) return;
-	pGameTimer->SetGameTickDelay(iDelay);
+	if (!pGameTimer)
+	{
+		return;
+	}
+	pGameTimer->SetGameTickDelay(delay);
 }
 
-void C4Application::OnResolutionChanged(unsigned int iXRes, unsigned int iYRes)
+void C4Application::OnResolutionChanged(unsigned int res_x, unsigned int res_y)
 {
 	// notify game
 	if (pDraw)
 	{
-		Game.OnResolutionChanged(iXRes, iYRes);
-		pDraw->OnResolutionChanged(iXRes, iYRes);
+		Game.OnResolutionChanged(res_x, res_y);
+		pDraw->OnResolutionChanged(res_x, res_y);
 	}
 	if (pWindow)
 	{
 		if (pWindow->pSurface)
-			pWindow->pSurface->UpdateSize(iXRes, iYRes);
+			pWindow->pSurface->UpdateSize(res_x, res_y);
 		if (!FullScreenMode())
 		{
 			C4Rect r;
@@ -779,21 +782,21 @@ void C4Application::OnKeyboardLayoutChanged()
 	if (AppState == C4AS_Startup) C4Startup::Get()->OnKeyboardLayoutChanged();
 }
 
-bool C4Application::SetGameFont(const char *szFontFace, int32_t iFontSize)
+bool C4Application::SetGameFont(const char *font_face, int32_t font_size)
 {
 #ifndef USE_CONSOLE
 	// safety
-	if (!szFontFace || !*szFontFace || iFontSize<1 || SLen(szFontFace)>=static_cast<int>(sizeof Config.General.RXFontName)) return false;
+	if (!font_face || !*font_face || font_size<1 || SLen(font_face)>=static_cast<int>(sizeof Config.General.RXFontName)) return false;
 	// first, check if the selected font can be created at all
 	// check regular font only - there's no reason why the other fonts couldn't be created
 	CStdFont TestFont;
-	if (!::FontLoader.InitFont(&TestFont, szFontFace, C4FontLoader::C4FT_Main, iFontSize, &::GraphicsResource.Files))
+	if (!::FontLoader.InitFont(&TestFont, font_face, C4FontLoader::C4FT_Main, font_size, &::GraphicsResource.Files))
 		return false;
 	// OK; reinit all fonts
 	StdStrBuf sOldFont; sOldFont.Copy(Config.General.RXFontName);
 	int32_t iOldFontSize = Config.General.RXFontSize;
-	SCopy(szFontFace, Config.General.RXFontName);
-	Config.General.RXFontSize = iFontSize;
+	SCopy(font_face, Config.General.RXFontName);
+	Config.General.RXFontSize = font_size;
 	if (!::GraphicsResource.InitFonts() || !C4Startup::Get()->Graphics.InitFonts())
 	{
 		// failed :o
@@ -807,14 +810,14 @@ bool C4Application::SetGameFont(const char *szFontFace, int32_t iFontSize)
 	return true;
 }
 
-void C4Application::OnCommand(const char *szCmd)
+void C4Application::OnCommand(const char *command_name)
 {
 	if (AppState == C4AS_Game)
-		::MessageInput.ProcessInput(szCmd);
+		::MessageInput.ProcessInput(command_name);
 	else if (AppState == C4AS_Startup)
 	{
 		AppState = C4AS_PreInit;
-		Game.SetScenarioFilename(szCmd);
+		Game.SetScenarioFilename(command_name);
 	}
 }
 
@@ -826,12 +829,12 @@ void C4Application::Activate()
 #endif
 }
 
-void C4Application::SetNextMission(const char *szMissionFilename)
+void C4Application::SetNextMission(const char *mission_filename)
 {
 	// set next mission if any is desired
-	if (szMissionFilename)
+	if (mission_filename)
 	{
-		NextMission = szMissionFilename;
+		NextMission = mission_filename;
 		// scenarios tend to use the wrong slash
 		std::replace(begin(NextMission), end(NextMission), AltDirectorySeparator, DirectorySeparator);
 	}
@@ -864,15 +867,15 @@ C4ApplicationGameTimer::C4ApplicationGameTimer()
 {
 }
 
-void C4ApplicationGameTimer::SetGameTickDelay(uint32_t iDelay)
+void C4ApplicationGameTimer::SetGameTickDelay(uint32_t delay)
 {
 	// Remember delay
-	iGameTickDelay = iDelay;
+	iGameTickDelay = delay;
 	// Smaller than minimum refresh delay?
-	if (iDelay < uint32_t(Config.Graphics.MaxRefreshDelay))
+	if (delay < uint32_t(Config.Graphics.MaxRefreshDelay))
 	{
 		// Set critical timer
-		SetDelay(iDelay);
+		SetDelay(delay);
 		// No additional breaking needed
 		iExtraGameTickDelay = 0;
 	}
@@ -881,11 +884,11 @@ void C4ApplicationGameTimer::SetGameTickDelay(uint32_t iDelay)
 		// Set critical timer
 		SetDelay(Config.Graphics.MaxRefreshDelay);
 		// Slow down game tick
-		iExtraGameTickDelay = iDelay;
+		iExtraGameTickDelay = delay;
 	}
 }
 
-bool C4ApplicationGameTimer::Execute(int iTimeout, pollfd *)
+bool C4ApplicationGameTimer::Execute(int timeout, pollfd *)
 {
 	// Check timer and reset
 	if (!CheckAndReset()) return true;
