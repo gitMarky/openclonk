@@ -51,7 +51,9 @@ int WINAPI WinMain (HINSTANCE hInst,
 		SETPROCESSDPIAWAREPROC SetProcessDPIAware =
 			reinterpret_cast<SETPROCESSDPIAWAREPROC>(GetProcAddress(user32, "SetProcessDPIAware"));
 		if (SetProcessDPIAware)
+		{
 			SetProcessDPIAware();
+		}
 		FreeLibrary(user32);
 	}
 
@@ -72,7 +74,7 @@ int WINAPI WinMain (HINSTANCE hInst,
 		
 	// Convert args to UTF-8
 	LPWSTR *curwarg = wargv;
-	while(argc--)
+	while (argc--)
 	{
 		int arglen = WideCharToMultiByte(CP_UTF8, 0, *curwarg, -1, nullptr, 0, nullptr, nullptr);
 		auto *utf8arg = new char[arglen ? arglen : 1];
@@ -96,10 +98,15 @@ int WINAPI WinMain (HINSTANCE hInst,
 
 	// delete arguments
 	for(std::vector<char*>::const_iterator it = argv.begin(); it != argv.end(); ++it)
+	{
 		delete[] *it;
+	}
 	argv.clear();
 	// Return exit code
-	if (!Game.GameOver) return C4XRV_Aborted;
+	if (!Game.GameOver)
+	{
+		return C4XRV_Aborted;
+	}
 	return C4XRV_Completed;
 }
 
@@ -134,7 +141,8 @@ static void crash_handler(int signo, siginfo_t * si, void *)
 	switch (signo)
 	{
 	case SIGINT: case SIGTERM: case SIGHUP:
-		if (signal_count < 2) {
+		if (signal_count < 2)
+		{
 			Application.Quit();
 			break;
 		} // else/fallthrough
@@ -164,9 +172,13 @@ static void crash_handler(int signo, siginfo_t * si, void *)
 				for (int i = sizeof(void *) * 2 - 1; i >= 0; --i)
 				{
 					if ((x & 0xf) > 9)
+					{
 						hex[i] = 'a' + (x & 0xf) - 9;
+					}
 					else
+					{
 						hex[i] = '0' + (x & 0xf);
+					}
 					x >>= 4;
 				}
 				write(logfd, hex, sizeof (hex));
@@ -174,9 +186,18 @@ static void crash_handler(int signo, siginfo_t * si, void *)
 				break;
 			}
 			write(logfd, "\n", sizeof ("\n") - 1);
-			if (logfd == STDERR_FILENO) logfd = GetLogFD();
-			else break;
-			if (logfd < 0) break;
+			if (logfd == STDERR_FILENO)
+			{
+				logfd = GetLogFD();
+			}
+			else
+			{
+				break;
+			}
+			if (logfd < 0)
+			{
+				break;
+			}
 		}
 #ifdef HAVE_EXECINFO_H
 		// Get the backtrace
@@ -186,7 +207,9 @@ static void crash_handler(int signo, siginfo_t * si, void *)
 		backtrace_symbols_fd (stack, count, STDERR_FILENO);
 		// Also to the log file
 		if (logfd >= 0)
+		{
 			backtrace_symbols_fd (stack, count, logfd);
+		}
 #endif
 		// Bye.
 		_exit(C4XRV_Failure);
@@ -199,7 +222,9 @@ static void restart(char * argv[])
 	// Close all file descriptors except stdin, stdout, stderr
 	int open_max = sysconf (_SC_OPEN_MAX);
 	for (int fd = 4; fd < open_max; fd++)
+	{
 		fcntl (fd, F_SETFD, FD_CLOEXEC);
+	}
 	// Execute the new engine
 	execlp(argv[0], argv[0], static_cast<char *>(nullptr));
 }
@@ -241,9 +266,15 @@ int main (int argc, char * argv[])
 	Application.Run();
 	// free app stuff
 	Application.Clear();
-	if (Application.restartAtEnd) restart(argv);
+	if (Application.restartAtEnd)
+	{
+		restart(argv);
+	}
 	// Return exit code
-	if (!Game.GameOver) return C4XRV_Aborted;
+	if (!Game.GameOver)
+	{
+		return C4XRV_Aborted;
+	}
 	return C4XRV_Completed;
 }
 #endif
