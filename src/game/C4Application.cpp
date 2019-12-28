@@ -53,7 +53,10 @@ C4Application::C4Application():
 C4Application::~C4Application()
 {
 	// clear gamepad
-	if (pGamePadControl) delete pGamePadControl;
+	if (pGamePadControl)
+	{
+		delete pGamePadControl;
+	}
 	// Close log
 	CloseLog();
 }
@@ -62,19 +65,23 @@ bool C4Application::DoInit(int argc, char * argv[])
 {
 	assert(AppState == C4AS_None);
 	// Config overwrite by parameter
-	StdStrBuf sConfigFilename;
-	for (int32_t iPar=0; iPar < argc; iPar++)
-		if (SEqual2NoCase(argv[iPar], "--config="))
-			sConfigFilename.Copy(argv[iPar] + 9);
+	StdStrBuf config_filename;
+	for (int32_t par = 0; par < argc; par++)
+	{
+		if (SEqual2NoCase(argv[par], "--config="))
+		{
+			config_filename.Copy(argv[par] + 9);
+		}
+	}
 	// Config check
 	Config.Init();
-	Config.Load(sConfigFilename.getData());
+	Config.Load(config_filename.getData());
 	Config.Save();
 	// sometimes, the configuration can become corrupted due to loading errors or w/e
 	// check this and reset defaults if necessary
 	if (Config.IsCorrupted())
 	{
-		if (sConfigFilename)
+		if (config_filename)
 		{
 			// custom config corrupted: Fail
 			Log("ERROR: Custom configuration corrupted - program abort!\n");
@@ -116,10 +123,10 @@ bool C4Application::DoInit(int argc, char * argv[])
 		// Error opening system group - no LogFatal, because it needs language table.
 		// This will *not* use the FatalErrors stack, but this will cause the game
 		// to instantly halt, anyway.
-		const char *szMessage = "Error opening system group file (System.ocg)!";
-		Log(szMessage);
+		const char *message = "Error opening system group file (System.ocg)!";
+		Log(message);
 		// Fatal error, game cannot start - have player notice
-		MessageDialog(szMessage);
+		MessageDialog(message);
 		return false;
 	}
 	// Parse command line
@@ -131,36 +138,48 @@ bool C4Application::DoInit(int argc, char * argv[])
 	// Init external language packs
 	Languages.Init();
 	// Load language string table
-	if (!Languages.LoadLanguage(Config.General.LanguageEx))
-		// No language table was loaded - bad luck...
-		if (!Languages.HasStringTable())
-			Log("WARNING: No language string table loaded!");
+	if (!Languages.LoadLanguage(Config.General.LanguageEx)
+	 && !Languages.HasStringTable())
+	{
+		Log("WARNING: No language string table loaded!");
+	}
 
 #if defined(WIN32) && defined(WITH_AUTOMATIC_UPDATE)
 	// Windows: handle incoming updates directly, even before starting up the gui
 	//          because updates will be applied in the console anyway.
-	if (!Application.IncomingUpdate.empty())
-		if (C4UpdateDlg::ApplyUpdate(Application.IncomingUpdate.c_str(), false, nullptr))
-			return true;
+	if (!Application.IncomingUpdate.empty()
+	 && C4UpdateDlg::ApplyUpdate(Application.IncomingUpdate.c_str(), false, nullptr))
+	{
+		return true;
+	}
 #endif
 
 	// Fixup resolution
 	if (!Config.Graphics.Windowed)
+	{
 		ApplyResolutionConstraints();
+	}
 
 	// activate
-	Active=true;
+	Active = true;
 
 	// Init carrier window
 	if (!isEditor)
 	{
 		if (!(pWindow = FullScreen.Init(this)))
-			{ Clear(); ShowGfxErrorDialog(); return false; }
+		{
+			Clear();
+			ShowGfxErrorDialog();
+			return false;
+		}
 	}
 	else
 	{
 		if (!(pWindow = Console.Init(this)))
-			{ Clear(); return false; }
+		{
+			Clear();
+			return false;
+		}
 	}
 
 	// init timers (needs window)
@@ -168,17 +187,25 @@ bool C4Application::DoInit(int argc, char * argv[])
 
 	// Initialize OpenGL
 	bool success = DDrawInit(this, GetConfigWidth(), GetConfigHeight(), Config.Graphics.Monitor);
-	if (!success) { LogFatal(LoadResStr("IDS_ERR_DDRAW")); Clear(); ShowGfxErrorDialog(); return false; }
-
-	if (!isEditor)
+	if (!success)
 	{
-		if (!SetVideoMode(Application.GetConfigWidth(), Application.GetConfigHeight(), Config.Graphics.RefreshRate, Config.Graphics.Monitor, !Config.Graphics.Windowed))
-			pWindow->SetSize(Config.Graphics.WindowX, Config.Graphics.WindowY);
+		LogFatal(LoadResStr("IDS_ERR_DDRAW"));
+		Clear();
+		ShowGfxErrorDialog();
+		return false;
+	}
+
+	if (!isEditor
+	 && !SetVideoMode(Application.GetConfigWidth(), Application.GetConfigHeight(), Config.Graphics.RefreshRate, Config.Graphics.Monitor, !Config.Graphics.Windowed))
+	{
+		pWindow->SetSize(Config.Graphics.WindowX, Config.Graphics.WindowY);
 	}
 
 	// Initialize gamepad
 	if (!pGamePadControl && Config.General.GamepadEnabled)
+	{
 		pGamePadControl = new C4GamePadControl();
+	}
 
 	AppState = C4AS_PreInit;
 
@@ -194,7 +221,8 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 {
 	argv0 = argv[0];
 	StdStrBuf CmdLine("Command line:");
-	for(int i = 0; i < argc; ++i) {
+	for(int i = 0; i < argc; ++i)
+	{
 		CmdLine.Append(" ");
 		CmdLine.Append(argv[i]);
 	}
@@ -253,11 +281,12 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 			{nullptr, 0, nullptr, 0}
 		};
 		int option_index = 0;
-		c = getopt_long (argc, argv, "abc:d:f:",
-			long_options, &option_index);
+		c = getopt_long (argc, argv, "abc:d:f:", long_options, &option_index);
      		// no more options
 		if (c == -1)
+		{
 			break;
+		}
 		switch (c)
 		{
 		case 0:
@@ -281,7 +310,10 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 			if (optarg)
 			{
 				Game.iLobbyTimeout = atoi(optarg);
-				if (Game.iLobbyTimeout < 0) Game.iLobbyTimeout = 0;
+				if (Game.iLobbyTimeout < 0)
+				{
+					Game.iLobbyTimeout = 0;
+				}
 			}
 			break;
 		case 'o': Game.fObserve = true; break;
@@ -297,7 +329,9 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 				SCopy(optarg, Config.General.DebugRecExternalFile, _MAX_PATH);
 			}
 			else
+			{
 				Log("Reading DebugRec from CtrlRec file in scenario record");
+			}
 			Config.General.DebugRec = 1;
 			Config.General.DebugRecWrite = 0;
 			break;
@@ -308,7 +342,9 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 				SCopy(optarg, Config.General.DebugRecExternalFile, _MAX_PATH);
 			}
 			else
+			{
 				Log("Writing DebugRec to CtrlRec file in scenario record");
+			}
 			Config.General.DebugRec = 1;
 			Config.General.DebugRecWrite = 1;
 			break;
@@ -365,9 +401,13 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 		}
 	}
 	if (!Config.Network.MasterServerSignUp)
+	{
 		Config.Network.LeagueServerSignUp = false;
+	}
 	if (Game.fObserve || Game.fLobby)
+	{
 		Game.NetworkActive = true;
+	}
 
 	while (optind < argc)
 	{
@@ -383,9 +423,13 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 		if (SEqualNoCase(GetExtension(szParameter),"ocs"))
 		{
 			if(IsGlobalPath(szParameter))
+			{
 				Game.SetScenarioFilename(szParameter);
+			}
 			else
+			{
 				Game.SetScenarioFilename((std::string(GetWorkingDirectory()) + DirSep + szParameter).c_str());
+			}
 
 			continue;
 		}
@@ -398,9 +442,13 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 		if (SEqualNoCase(GetExtension(szParameter),"ocp"))
 		{
 			if(IsGlobalPath(szParameter))
+			{
 				SAddModule(Game.PlayerFilenames, szParameter);
+			}
 			else
+			{
 				SAddModule(Game.PlayerFilenames, (std::string(GetWorkingDirectory()) + DirSep + szParameter).c_str());
+			}
 
 			continue;
 		}
@@ -458,7 +506,9 @@ void C4Application::ParseCommandLine(int argc, char * argv[])
 
 	// Default to editor if scenario given, player mode otherwise
 	if (isEditor == 2)
+	{
 		isEditor = !!*Game.ScenarioFilename && !Config.General.OpenScenarioInGameMode;
+	}
 
 	// record?
 	Game.Record = Game.Record || (Config.Network.LeagueServerSignUp && Game.NetworkActive);
@@ -471,17 +521,25 @@ void C4Application::ApplyResolutionConstraints()
 {
 	// Not changing the resolution always works anyway
 	if (Config.Graphics.ResX == -1 && Config.Graphics.ResY == -1)
+	{
 		return;
+	}
 	// Enumerate display modes
-	int32_t idx = -1, iXRes, iYRes, iBitDepth, iRefreshRate;
+	int32_t idx = -1;
 	int32_t best_match = -1;
 	uint32_t best_delta = ~0;
-	while (GetIndexedDisplayMode(++idx, &iXRes, &iYRes, &iBitDepth, &iRefreshRate, Config.Graphics.Monitor))
+	int32_t res_x, res_y, bit_depth, refresh_rate;
+	while (GetIndexedDisplayMode(++idx, &res_x, &res_y, &bit_depth, &refresh_rate, Config.Graphics.Monitor))
 	{
-		if (iBitDepth != C4Draw::COLOR_DEPTH) continue;
-		uint32_t delta = std::abs(Config.Graphics.ResX*Config.Graphics.ResY - iXRes*iYRes);
-		if (!delta && iBitDepth == C4Draw::COLOR_DEPTH && iRefreshRate == Config.Graphics.RefreshRate)
+		if (bit_depth != C4Draw::COLOR_DEPTH)
+		{
+			continue;
+		}
+		uint32_t delta = std::abs(Config.Graphics.ResX*Config.Graphics.ResY - res_x*res_y);
+		if (!delta && bit_depth == C4Draw::COLOR_DEPTH && refresh_rate == Config.Graphics.RefreshRate)
+		{
 			return; // Exactly the expected mode
+		}
 		if (delta < best_delta)
 		{
 			// Better match than before
@@ -492,70 +550,91 @@ void C4Application::ApplyResolutionConstraints()
 	if (best_match != -1)
 	{
 		// Apply next-best mode
-		GetIndexedDisplayMode(best_match, &iXRes, &iYRes, &iBitDepth, &iRefreshRate, Config.Graphics.Monitor);
-		if (iXRes != Config.Graphics.ResX || iYRes != Config.Graphics.ResY)
+		GetIndexedDisplayMode(best_match, &res_x, &res_y, &bit_depth, &refresh_rate, Config.Graphics.Monitor);
+		if (res_x != Config.Graphics.ResX || res_y != Config.Graphics.ResY)
+		{
 			// Don't warn if only bit depth changes
 			// Also, lang table not loaded yet
-			LogF("Warning: The selected resolution %dx%d is not available and has been changed to %dx%d.", Config.Graphics.ResX, Config.Graphics.ResY, iXRes, iYRes);
-		Config.Graphics.ResX = iXRes; Config.Graphics.ResY = iYRes;
-		Config.Graphics.RefreshRate = iRefreshRate;
+			LogF("Warning: The selected resolution %dx%d is not available and has been changed to %dx%d.", Config.Graphics.ResX, Config.Graphics.ResY, res_x, res_y);
+		}
+		Config.Graphics.ResX = res_x; Config.Graphics.ResY = res_y;
+		Config.Graphics.RefreshRate = refresh_rate;
 	}
 }
 
 bool C4Application::PreInit()
 {
 	// startup dialog: Only use if no next mission has been provided
-	bool fUseStartupDialog = !Game.HasScenario();
+	bool use_startup_dialog = !Game.HasScenario();
 
 	// Load graphics early, before we draw anything, since we need shaders
 	// loaded to draw.
 	Game.SetInitProgress(0.0f);
 	Log(LoadResStr("IDS_PRC_GFXRES"));
-	if (!GraphicsResource.Init()) return false;
-	Game.SetInitProgress(fUseStartupDialog ? 10.0f : 1.0f);
+	if (!GraphicsResource.Init())
+	{
+		return false;
+	}
+	Game.SetInitProgress(use_startup_dialog ? 10.0f : 1.0f);
 
 	// Startup message board
 	if (!isEditor)
+	{
 		if (Config.Graphics.ShowStartupMessages || Game.NetworkActive)
 		{
 			C4Facet cgo; cgo.Set(FullScreen.pSurface,0,0,C4GUI::GetScreenWdt(), C4GUI::GetScreenHgt());
 			GraphicsSystem.MessageBoard->Init(cgo,true);
 		}
+	}
 
 	// init loader: Black screen for first start if a video is to be shown; otherwise default spec
-	if (fUseStartupDialog && !isEditor)
+	if (use_startup_dialog && !isEditor)
 	{
 		if (!::GraphicsSystem.InitLoaderScreen(C4CFN_StartupBackgroundMain))
-			{ LogFatal(LoadResStr("IDS_PRC_ERRLOADER")); return false; }
+		{
+			LogFatal(LoadResStr("IDS_PRC_ERRLOADER"));
+			return false;
+		}
 	}
-	Game.SetInitProgress(fUseStartupDialog ? 20.0f : 2.0f);
+	Game.SetInitProgress(use_startup_dialog ? 20.0f : 2.0f);
 
-	if (!Game.PreInit()) return false;
+	if (!Game.PreInit())
+	{
+		return false;
+	}
 
 	// Music
 	if (!MusicSystem.Init("frontend"))
+	{
 		Log(LoadResStr("IDS_PRC_NOMUSIC"));
+	}
 
-	Game.SetInitProgress(fUseStartupDialog ? 34.0f : 2.0f);
+	Game.SetInitProgress(use_startup_dialog ? 34.0f : 2.0f);
 
 	// Sound
 	if (!SoundSystem.Init())
+	{
 		Log(LoadResStr("IDS_PRC_NOSND"));
+	}
 
 	// Play some music! - after sound init because sound system might be needed by music system
-	if (fUseStartupDialog && !isEditor && Config.Sound.FEMusic)
+	if (use_startup_dialog && !isEditor && Config.Sound.FEMusic)
+	{
 		MusicSystem.Play();
+	}
 
-	Game.SetInitProgress(fUseStartupDialog ? 35.0f : 3.0f);
+	Game.SetInitProgress(use_startup_dialog ? 35.0f : 3.0f);
 
-	if (fUseStartupDialog)
+	if (use_startup_dialog)
 	{
 		AppState = C4AS_Startup;
 		// default record?
 		Game.Record = Game.Record || Config.General.DefRec;
 		// if no scenario or direct join has been specified, get game startup parameters by startup dialog
 		if (!isEditor)
+		{
 			C4Startup::InitStartup();
+		}
 	}
 	// directly launch scenario / network game
 	else
@@ -580,7 +659,8 @@ void C4Application::Clear()
 	if (pGameTimer)
 	{
 		Remove(pGameTimer);
-		delete pGameTimer; pGameTimer = nullptr;
+		delete pGameTimer;
+		pGameTimer = nullptr;
 	}
 	// quit irc
 	IRCClient.Close();
@@ -588,12 +668,18 @@ void C4Application::Clear()
 	SystemGroup.Close();
 	// Log
 	if (::Languages.HasStringTable()) // Avoid (double and undefined) message on (second?) shutdown...
+	{
 		Log(LoadResStr("IDS_PRC_DEINIT"));
+	}
 	// Clear external language packs and string table
 	Languages.Clear();
 	Languages.ClearLanguage();
 	// gamepad clear
-	if (pGamePadControl) { delete pGamePadControl; pGamePadControl=nullptr; }
+	if (pGamePadControl)
+	{
+		delete pGamePadControl;
+		pGamePadControl=nullptr;
+	}
 	// music system clear
 	MusicSystem.Clear();
 	SoundSystem.Clear();
@@ -601,7 +687,11 @@ void C4Application::Clear()
 	// clear editcursor holding graphics before clearing draw
 	::Console.EditCursor.Clear();
 	// Clear direct draw (late, because it's needed for e.g. Log)
-	if (pDraw) { delete pDraw; pDraw=nullptr; }
+	if (pDraw)
+	{
+		delete pDraw;
+		pDraw=nullptr;
+	}
 	// Close window
 	FullScreen.Clear();
 	Console.Clear();
@@ -617,7 +707,10 @@ void C4Application::Quit()
 	// Participants should not be cleared for usual startup dialog
 
 	// Save config if there was no loading error
-	if (Config.ConfigLoaded) Config.Save();
+	if (Config.ConfigLoaded)
+	{
+		Config.Save();
+	}
 	// make sure startup data is unloaded
 	C4Startup::Unload();
 	// fonts are loaded at start and never unloaded
@@ -627,11 +720,14 @@ void C4Application::Quit()
 	AppState = C4AS_Quit;
 }
 
-void C4Application::OpenGame(const char * scenario)
+void C4Application::OpenGame(const char *scenario)
 {
 	if (AppState == C4AS_Startup)
 	{
-		if (scenario) Game.SetScenarioFilename(scenario);
+		if (scenario)
+		{
+			Game.SetScenarioFilename(scenario);
+		}
 		AppState = C4AS_StartGame;
 	}
 	else
@@ -667,12 +763,18 @@ void C4Application::GameTick()
 		// Do nothing, the main loop will exit soon
 		break;
 	case C4AS_PreInit:
-		if (!PreInit()) Quit();
+		if (!PreInit())
+		{
+			Quit();
+		}
 		break;
 	case C4AS_Startup:
 		SoundSystem.Execute();
 		MusicSystem.Execute();
-		if (pGamePadControl) pGamePadControl->Execute();
+		if (pGamePadControl)
+		{
+			pGamePadControl->Execute();
+		}
 		// wait for the user to start a game
 		break;
 	case C4AS_StartGame:
@@ -681,34 +783,50 @@ void C4Application::GameTick()
 		AppState = C4AS_Game;
 #ifdef WITH_QT_EDITOR
 		// Notify console
-		if (isEditor) ::Console.OnStartGame();
+		if (isEditor)
+		{
+			::Console.OnStartGame();
+		}
 #endif
 		// first-time game initialization
 		if (!Game.Init())
 		{
 			// set error flag (unless this was a lobby user abort)
 			if (!C4GameLobby::UserAbort)
+			{
 				Game.fQuitWithError = true;
+			}
 			// no start: Regular QuitGame; this may reset the engine to startup mode if desired
 			QuitGame();
 			break;
 		}
 		if(Config.Graphics.Windowed == 2 && FullScreenMode())
+		{
 			Application.SetVideoMode(GetConfigWidth(), GetConfigHeight(), Config.Graphics.RefreshRate, Config.Graphics.Monitor, true);
+		}
 		if (!isEditor)
+		{
 			pWindow->GrabMouse(true);
+		}
 		// Gamepad events have to be polled here so that the controller
 		// connection state is always up-to-date before players are
 		// joining.
-		if (pGamePadControl) pGamePadControl->Execute();
+		if (pGamePadControl)
+		{
+			pGamePadControl->Execute();
+		}
 		break;
 	case C4AS_AfterGame:
 		// stop game
 		Game.Clear();
-		if(Config.Graphics.Windowed == 2 && NextMission.empty() && !isEditor)
+		if (Config.Graphics.Windowed == 2 && NextMission.empty() && !isEditor)
+		{
 			Application.SetVideoMode(GetConfigWidth(), GetConfigHeight(), Config.Graphics.RefreshRate, Config.Graphics.Monitor, false);
+		}
 		if (!isEditor)
+		{
 			pWindow->GrabMouse(false);
+		}
 		AppState = C4AS_PreInit;
 		// if a next mission is desired, set to start it
 		if (!NextMission.empty())
@@ -722,12 +840,17 @@ void C4Application::GameTick()
 	case C4AS_Game:
 		// Game
 		if (Game.IsRunning)
+		{
 			Game.Execute();
+		}
 		// Sound
 		SoundSystem.Execute();
 		MusicSystem.Execute();
 		// Gamepad
-		if (pGamePadControl) pGamePadControl->Execute();
+		if (pGamePadControl)
+		{
+			pGamePadControl->Execute();
+		}
 		break;
 	}
 }
@@ -738,10 +861,14 @@ void C4Application::Draw()
 
 	// Fullscreen mode
 	if (!isEditor)
+	{
 		FullScreen.Execute();
+	}
 	// Console mode
 	else
+	{
 		Console.Execute();
+	}
 }
 
 void C4Application::SetGameTickDelay(int delay)
@@ -764,7 +891,9 @@ void C4Application::OnResolutionChanged(unsigned int res_x, unsigned int res_y)
 	if (pWindow)
 	{
 		if (pWindow->pSurface)
+		{
 			pWindow->pSurface->UpdateSize(res_x, res_y);
+		}
 		if (!FullScreenMode())
 		{
 			C4Rect r;
@@ -779,30 +908,38 @@ void C4Application::OnKeyboardLayoutChanged()
 {
 	// re-resolve all keys
 	Game.OnKeyboardLayoutChanged();
-	if (AppState == C4AS_Startup) C4Startup::Get()->OnKeyboardLayoutChanged();
+	if (AppState == C4AS_Startup)
+	{
+		C4Startup::Get()->OnKeyboardLayoutChanged();
+	}
 }
 
 bool C4Application::SetGameFont(const char *font_face, int32_t font_size)
 {
 #ifndef USE_CONSOLE
 	// safety
-	if (!font_face || !*font_face || font_size<1 || SLen(font_face)>=static_cast<int>(sizeof Config.General.RXFontName)) return false;
+	if (!font_face || !*font_face || font_size < 1 || SLen(font_face) >= static_cast<int>(sizeof Config.General.RXFontName))
+	{
+		return false;
+	}
 	// first, check if the selected font can be created at all
 	// check regular font only - there's no reason why the other fonts couldn't be created
-	CStdFont TestFont;
-	if (!::FontLoader.InitFont(&TestFont, font_face, C4FontLoader::C4FT_Main, font_size, &::GraphicsResource.Files))
+	CStdFont test_font;
+	if (!::FontLoader.InitFont(&test_font, font_face, C4FontLoader::C4FT_Main, font_size, &::GraphicsResource.Files))
+	{
 		return false;
+	}
 	// OK; reinit all fonts
-	StdStrBuf sOldFont; sOldFont.Copy(Config.General.RXFontName);
-	int32_t iOldFontSize = Config.General.RXFontSize;
+	StdStrBuf old_font; old_font.Copy(Config.General.RXFontName);
+	int32_t old_font_size = Config.General.RXFontSize;
 	SCopy(font_face, Config.General.RXFontName);
 	Config.General.RXFontSize = font_size;
 	if (!::GraphicsResource.InitFonts() || !C4Startup::Get()->Graphics.InitFonts())
 	{
 		// failed :o
 		// shouldn't happen. Better restore config.
-		SCopy(sOldFont.getData(), Config.General.RXFontName);
-		Config.General.RXFontSize = iOldFontSize;
+		SCopy(old_font.getData(), Config.General.RXFontName);
+		Config.General.RXFontSize = old_font_size;
 		return false;
 	}
 #endif
@@ -813,7 +950,9 @@ bool C4Application::SetGameFont(const char *font_face, int32_t font_size)
 void C4Application::OnCommand(const char *command_name)
 {
 	if (AppState == C4AS_Game)
+	{
 		::MessageInput.ProcessInput(command_name);
+	}
 	else if (AppState == C4AS_Startup)
 	{
 		AppState = C4AS_PreInit;
@@ -839,23 +978,34 @@ void C4Application::SetNextMission(const char *mission_filename)
 		std::replace(begin(NextMission), end(NextMission), AltDirectorySeparator, DirectorySeparator);
 	}
 	else
+	{
 		NextMission.clear();
+	}
 }
 
 void C4Application::NextTick()
 {
-	if (!pGameTimer) return;
+	if (!pGameTimer)
+	{
+		return;
+	}
 	pGameTimer->Set();
 }
 
 bool C4Application::FullScreenMode()
 {
-	if(isEditor)
+	if (isEditor)
+	{
 		return false;
-	if(!Config.Graphics.Windowed)
+	}
+	if (!Config.Graphics.Windowed)
+	{
 		return true;
-	if(Config.Graphics.Windowed == 2 && Game.IsRunning)
+	}
+	if (Config.Graphics.Windowed == 2 && Game.IsRunning)
+	{
 		return true;
+	}
 	return false;
 }
 
@@ -891,33 +1041,44 @@ void C4ApplicationGameTimer::SetGameTickDelay(uint32_t delay)
 bool C4ApplicationGameTimer::Execute(int timeout, pollfd *)
 {
 	// Check timer and reset
-	if (!CheckAndReset()) return true;
-	C4TimeMilliseconds tNow = C4TimeMilliseconds::Now();
+	if (!CheckAndReset())
+	{
+		return true;
+	}
+	C4TimeMilliseconds now = C4TimeMilliseconds::Now();
 	// Execute
-	if (tNow >= tLastGameTick + iExtraGameTickDelay || Game.GameGo)
+	if (now >= tLastGameTick + iExtraGameTickDelay || Game.GameGo)
 	{
 		if (iGameTickDelay)
+		{
 			tLastGameTick += iGameTickDelay;
+		}
 		else
-			tLastGameTick = tNow;
+		{
+			tLastGameTick = now;
+		}
 
 		// Compensate if things get too slow
-		if (tNow > tLastGameTick + iGameTickDelay)
-			tLastGameTick += (tNow - tLastGameTick) / 2;
+		if (now > tLastGameTick + iGameTickDelay)
+		{
+			tLastGameTick += (now - tLastGameTick) / 2;
+		}
 
 		Application.GameTick();
 	}
 	// Draw
 	if (!Game.DoSkipFrame)
 	{
-		C4TimeMilliseconds tPreGfxTime = C4TimeMilliseconds::Now();
+		C4TimeMilliseconds pre_gfx_time = C4TimeMilliseconds::Now();
 
 		Application.Draw();
 
 		// Automatic frame skip if graphics are slowing down the game (skip max. every 2nd frame)
-		Game.DoSkipFrame = Game.Parameters.AutoFrameSkip && (tPreGfxTime + iGameTickDelay < C4TimeMilliseconds::Now());
-	} else {
-		Game.DoSkipFrame=false;
+		Game.DoSkipFrame = Game.Parameters.AutoFrameSkip && (pre_gfx_time + iGameTickDelay < C4TimeMilliseconds::Now());
+	}
+	else
+	{
+		Game.DoSkipFrame = false;
 	}
 	return true;
 }
