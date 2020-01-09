@@ -3307,7 +3307,7 @@ void InitObjectFunctionMap(C4AulScriptEngine *pEngine)
 		assert(pCDef->ValType == C4V_Int); // only int supported currently
 		pEngine->RegisterGlobalConstant(pCDef->Identifier, C4VInt(pCDef->Data));
 	}
-	C4PropListStatic * p = pEngine->GetPropList();
+	C4PropListStatic * p = pEngine->GetObjectPropList();
 #define F(f) ::AddFunc(p, #f, Fn##f)
 
 	F(DoCon);

@@ -112,6 +112,9 @@ public:
 // holds all C4AulScripts
 class C4AulScriptEngine: public C4PropListStaticMember
 {
+private:
+	C4PropListStatic * ScriptObjectFunctions = C4PropList::NewStatic(nullptr, this, &::Strings.P[P_Prototype]);
+
 protected:
 	C4AulFuncMap FuncLookUp;
 	C4AulFunc * GetFirstFunc(const char * Name)
@@ -149,6 +152,7 @@ public:
 	void Link(C4DefList *rDefs); // link and parse all scripts
 	void ReLink(C4DefList *rDefs); // unlink, link and parse all scripts
 	C4PropListStatic * GetPropList() { return this; }
+	C4PropListStatic * GetObjectPropList() { return ScriptObjectFunctions; }
 	bool ReloadScript(const char *szScript, const char *szLanguage); // search script and reload, if found
 
 	// For the list of functions in the PropertyDlg
