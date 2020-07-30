@@ -681,6 +681,12 @@ C4Effect * C4PropList::GetEffect()
 	return nullptr;
 }
 
+C4Player * C4PropList::GetPlayer()
+{
+	if (GetPrototype()) return GetPrototype()->GetPlayer();
+	return nullptr;
+}
+
 template<> template<>
 unsigned int C4Set<C4Property>::Hash<const C4String *>(C4String const * const & e)
 {
@@ -1069,7 +1075,7 @@ template<> template<>
 unsigned int C4Set<C4PropListScript *>::Hash<C4PropListScript *>(C4PropListScript * const & e)
 {
 	// since script prop lists are only put in the set for reference keeping, just hash by pointer
-	// but use only some of the more significant bits because
+	// but use only some of the more significant bits because 
 	uintptr_t hash = reinterpret_cast<uintptr_t>(e);
 	return (unsigned int)(hash / 63);
 }
